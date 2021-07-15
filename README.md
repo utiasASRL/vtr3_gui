@@ -4,14 +4,14 @@ This user interface can but is not meant to run standalone. Include the UI into 
 
 ## Installation
 
+Commands below assumes you are at the root directory of this repository.
+
 ### Dependencies
 
 ```bash
 sudo apt install -y nodejs npm protobuf-compiler  # system deps
 pip3 install flask flask_socketio eventlet python-socketio python-socketio[client] websocket-client  # python deps
 ```
-
-See [here](./vtr-ui/README.md). **TODO**: integrate UI build into CMakeLists.txt.
 
 ### Build the UI
 
@@ -25,13 +25,13 @@ cd vtr-ui && npm install . && npm run build  # install dependencies and then "co
 In one terminal,
 
 ```bash
-python web_server.py  # web server that hosts the web page and handle some requests from the frontend
+python3 web_server.py  # web server that hosts the web page and handle some requests from the frontend
 ```
 
 In another terminal,
 
 ```bash
-python socket_server.py  # socket io server that passes data between the frontend and other systems, mainly used to send updates from vtr to the frontend
+python3 socket_server.py  # socket io server that passes data between the frontend and other systems, mainly used to send updates from vtr to the frontend
 ```
 
 Open your brower and navigate to `http://localhost:5200`, and select "None" when choosing project.
