@@ -137,10 +137,12 @@ class GraphMap extends React.Component {
     super(props);
 
     this.state = {
-      // Leaflet map
+      /// Leaflet map setup
       mapCenter: L.latLng(43.782, -79.466), // Home of VT&R!
       lowerBound: L.latLng(43.781596, -79.467298),
       upperBound: L.latLng(43.782806, -79.464608),
+      zooming: false, // Whether user is zooming in/out
+      /// VTR specific state variables
       // Pose graph
       graphLoaded: false, // Set to true on first load.
       graphReady: false, // Whether or not the graph is ready to be displayed.
@@ -171,22 +173,7 @@ class GraphMap extends React.Component {
       moveMapPaths: [], // A copy of paths used for alignment.
       rotLoc: L.latLng(43.782, -79.466),
       transLoc: L.latLng(43.782, -79.466),
-      zooming: false, // The alignment does not work very well with zooming.
     };
-
-    // Pose graph loading related.
-    this.points = new Map(); // Mapping from VertexId to Vertex for path lookup.
-    this.seq = 0;
-    this.stamp = 0;
-    this.tree = null; // A td-tree to find the nearest vertices.
-    this.updates = [];
-    this.proto = null;
-    protobuf.load("/proto/graph.proto", (error, root) => {
-      if (error) throw error;
-      this.proto = root;
-      this._loadGraph();
-      this._loadInitRobotState();
-    }); // Note: the callback is not called until the second time rendering.
 
     // Get the underlying leaflet map.
     this.map = null;
@@ -197,54 +184,80 @@ class GraphMap extends React.Component {
         this.map.on("zoomend", this._onZoomEnd, this);
       }
     };
-    // Markers used to move graph.
-    this.transMarker = null;
-    this.scaleMarker = null;
-    this.rotMarker = null;
-    this.transRotDiffP = null; // Only used when zooming
-    // Marker used to move robot and the target vertex to move to.
-    this.robotMarker = null;
-    this.robotVertex = null;
-    // Markers used for merging
-    this.mergeMarker = { s: null, c: null, e: null };
-    this.mergeVertex = { s: null, c: null, e: null };
+
+    if (props.mode === "vtr") {
+      // Pose graph loading related.
+      this.points = new Map(); // Mapping from VertexId to Vertex for path lookup.
+      this.seq = 0;
+      this.stamp = 0;
+      this.tree = null; // A td-tree to find the nearest vertices.
+      this.updates = [];
+      this.proto = null;
+      protobuf.load("/proto/graph.proto", (error, root) => {
+        if (error) throw error;
+        this.proto = root;
+        this._loadGraph();
+        this._loadInitRobotState();
+      }); // Note: the callback is not called until the second time rendering.
+
+      // Markers used to move graph.
+      this.transMarker = null;
+      this.scaleMarker = null;
+      this.rotMarker = null;
+      this.transRotDiffP = null; // Only used when zooming
+      // Marker used to move robot and the target vertex to move to.
+      this.robotMarker = null;
+      this.robotVertex = null;
+      // Markers used for merging
+      this.mergeMarker = { s: null, c: null, e: null };
+      this.mergeVertex = { s: null, c: null, e: null };
+    }
   }
 
   componentDidMount() {
     // Socket IO
-    this.props.socket.on("robot/loc", this._loadRobotState.bind(this));
-    this.props.socket.on("robot/path", this._loadCurrentPath.bind(this));
-    this.props.socket.on("graph/update", this._loadGraphUpdate.bind(this));
+    if (this.props.mode === "vtr") {
+      this.props.socket.on("robot/loc", this._loadRobotState.bind(this));
+      this.props.socket.on("robot/path", this._loadCurrentPath.bind(this));
+      this.props.socket.on("graph/update", this._loadGraphUpdate.bind(this));
+    }
   }
 
   componentDidUpdate(prevProps) {
-    // Reload graph after reconnecting to SocketIO.
-    if (!prevProps.socketConnected && this.props.socketConnected)
-      this._loadGraph();
-    // Tools: moveMap, moveRobot, merge, localize
-    if (!prevProps.merge && this.props.merge) this._startMerge();
-    if (!prevProps.moveMap && this.props.moveMap) this._startMoveMap();
-    if (!prevProps.moveRobot && this.props.moveRobot) this._startMoveRobot();
-    if (!prevProps.relocalize && this.props.relocalize) this._startRelocalize();
-    if (prevProps.merge && !this.props.merge)
-      this._finishMerge(this.props.userConfirmed);
-    if (prevProps.moveMap && !this.props.moveMap)
-      this._finishMoveMap(this.props.userConfirmed);
-    if (prevProps.moveRobot && !this.props.moveRobot)
-      this._finishMoveRobot(this.props.userConfirmed);
-    if (prevProps.relocalize && !this.props.relocalize)
-      this._finishRelocalize(this.props.userConfirmed);
+    if (this.props.mode === "vtr") {
+      // Reload graph after reconnecting to SocketIO.
+      if (!prevProps.socketConnected && this.props.socketConnected)
+        this._loadGraph();
+      // Tools: moveMap, moveRobot, merge, localize
+      if (!prevProps.merge && this.props.merge) this._startMerge();
+      if (!prevProps.moveMap && this.props.moveMap) this._startMoveMap();
+      if (!prevProps.moveRobot && this.props.moveRobot) this._startMoveRobot();
+      if (!prevProps.relocalize && this.props.relocalize)
+        this._startRelocalize();
+      if (prevProps.merge && !this.props.merge)
+        this._finishMerge(this.props.userConfirmed);
+      if (prevProps.moveMap && !this.props.moveMap)
+        this._finishMoveMap(this.props.userConfirmed);
+      if (prevProps.moveRobot && !this.props.moveRobot)
+        this._finishMoveRobot(this.props.userConfirmed);
+      if (prevProps.relocalize && !this.props.relocalize)
+        this._finishRelocalize(this.props.userConfirmed);
+    }
   }
 
   componentWillUnmount() {
     // Socket IO
-    this.props.socket.off("robot/loc", this._loadRobotState.bind(this));
-    this.props.socket.off("robot/path", this._loadCurrentPath.bind(this));
-    this.props.socket.off("graph/update", this._loadGraphUpdate.bind(this));
+    if (this.props.mode === "vtr") {
+      this.props.socket.off("robot/loc", this._loadRobotState.bind(this));
+      this.props.socket.off("robot/path", this._loadCurrentPath.bind(this));
+      this.props.socket.off("graph/update", this._loadGraphUpdate.bind(this));
+    }
   }
 
   render() {
     const {
+      mode,
+      /// VTR specific
       addingGoalPath,
       addingGoalType,
       moveMap,
@@ -257,11 +270,14 @@ class GraphMap extends React.Component {
       graphPinVertex,
     } = this.props;
     const {
+      mapCenter,
+      upperBound,
+      lowerBound,
+      zooming,
+      /// VTR specific
       branch,
       currentPath,
       graphReady,
-      lowerBound,
-      mapCenter,
       moveMapPaths,
       paths,
       robotLocation,
@@ -270,8 +286,6 @@ class GraphMap extends React.Component {
       targetLocation,
       targetOrientation,
       targetVertex,
-      upperBound,
-      zooming,
     } = this.state;
 
     return (
@@ -285,7 +299,7 @@ class GraphMap extends React.Component {
         onClick={this._onMapClick.bind(this)}
         zoomControl={false}
       >
-        {/* Google map tiles */}
+        {/* leaflet map tiles */}
         <TileLayer
           maxNativeZoom={20}
           maxZoom={22}
@@ -296,195 +310,202 @@ class GraphMap extends React.Component {
           // attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
         />
         <ZoomControl position="bottomright" />
-        {/* Main graph and robot */}
-        {graphReady && (
+        {/* VTR specific: posegraph, robot, etc */}
+        {mode === "vtr" && (
           <>
-            {/* Current path (to repeat) */}
-            <Pane
-              style={{
-                zIndex: 500, // \todo Magic number.
-              }}
-            >
-              <Polyline
-                color={"#f50057"}
-                opacity={poseGraphOpacity}
-                positions={this._extractVertices(currentPath, this.points).map(
-                  (v) => [v.lat, v.lng]
-                )}
-                weight={5}
-              />
-            </Pane>
-            {/* Current branch (during teach) */}
-            <Pane
-              style={{
-                zIndex: 500, // \todo Magic number.
-              }}
-            >
-              <Polyline
-                color={"#f50057"}
-                opacity={poseGraphOpacity}
-                positions={this._extractVertices(branch, this.points).map(
-                  (v) => [v.lat, v.lng]
-                )}
-                weight={5}
-              />
-            </Pane>
-            {/* Graph paths */}
-            {paths.map((path, idx) => {
-              let vertices = this._extractVertices(path, this.points);
-              let coords = vertices.map((v) => [v.lat, v.lng]);
-              return (
-                <Polyline
-                  key={shortid.generate()}
-                  color={"#ffc107"}
-                  opacity={poseGraphOpacity}
-                  positions={coords}
-                  weight={7}
-                />
-              );
-            })}
-            {/* Current path considered for merging */}
-            <Pane
-              style={{
-                zIndex: 500, // \todo Magic number.
-              }}
-            >
-              <Polyline
-                color={"#bfff00"}
-                opacity={poseGraphOpacity}
-                positions={this._extractVertices(mergePath, this.points).map(
-                  (v) => [v.lat, v.lng]
-                )}
-                weight={5}
-              />
-            </Pane>
-            {/* Robot marker */}
-            {robotReady && (
-              <RotatedMarker
-                position={robotLocation}
-                rotationAngle={robotOrientation}
-                icon={icon({
-                  iconUrl: robotIcon,
-                  iconSize: [40, 40],
-                })}
-                opacity={0.85}
-                zIndexOffset={1500}
-              />
-            )}
-            {/* Target robot marker for merging*/}
-            {robotReady && targetVertex !== null && (
-              <RotatedMarker
-                position={targetLocation}
-                rotationAngle={targetOrientation}
-                icon={icon({
-                  iconUrl: targetIcon,
-                  iconSize: [40, 40],
-                })}
-                onClick={() => this._submitMerge()}
-                opacity={0.85}
-                zIndexOffset={1600}
-              />
-            )}
-            {/* Selected vertices for a repeat goal being added */}
-            {addingGoalType === "Repeat" &&
-              addingGoalPath.map((id, idx) => {
-                if (!this.points.has(id)) return null;
-                return (
-                  <Marker
-                    key={shortid.generate()}
-                    position={this.points.get(id)}
-                    icon={pathIcon}
-                    opacity={0.8}
-                  />
-                );
-              })}
-            {/* Selected vertices for a repeat goal being selected (already added) */}
-            {selectedGoalPath.map((id, idx) => {
-              if (!this.points.has(id)) return null;
-              return (
-                <Marker
-                  key={shortid.generate()}
-                  position={this.points.get(id)}
-                  icon={pathIcon2}
-                  opacity={0.8}
-                />
-              );
-            })}
-            {/* polylines that displays the graph pins */}
-            {graphPins.map((pin) => {
-              return (
+            {/* Main graph and robot */}
+            {graphReady && (
+              <>
+                {/* Current path (to repeat) */}
                 <Pane
-                  key={shortid.generate()}
                   style={{
                     zIndex: 500, // \todo Magic number.
                   }}
                 >
-                  {/* the pin on first vertex is undefined when the graph is empty (should be the only undefined case) */}
-                  {this.points.get(pin.id) !== undefined && (
-                    <>
-                      <Marker
-                        icon={pinGraphMarkerIcon}
-                        opacity={poseGraphOpacity}
-                        position={pin.latLng}
-                      />
-                      <Polyline
-                        color={"#bfff00"}
-                        opacity={poseGraphOpacity}
-                        positions={[this.points.get(pin.id), pin.latLng]}
-                        weight={5}
-                      />
-                    </>
-                  )}
-                </Pane>
-              );
-            })}
-            {/* markers that displays the current pin to be added to the graph */}
-            {pinGraph && (
-              <>
-                {graphPinVertex !== null && (
-                  <Marker
-                    position={this.points.get(graphPinVertex)}
-                    icon={pinGraphIcon}
+                  <Polyline
+                    color={"#f50057"}
                     opacity={poseGraphOpacity}
+                    positions={this._extractVertices(
+                      currentPath,
+                      this.points
+                    ).map((v) => [v.lat, v.lng])}
+                    weight={5}
+                  />
+                </Pane>
+                {/* Current branch (during teach) */}
+                <Pane
+                  style={{
+                    zIndex: 500, // \todo Magic number.
+                  }}
+                >
+                  <Polyline
+                    color={"#f50057"}
+                    opacity={poseGraphOpacity}
+                    positions={this._extractVertices(branch, this.points).map(
+                      (v) => [v.lat, v.lng]
+                    )}
+                    weight={5}
+                  />
+                </Pane>
+                {/* Graph paths */}
+                {paths.map((path, idx) => {
+                  let vertices = this._extractVertices(path, this.points);
+                  let coords = vertices.map((v) => [v.lat, v.lng]);
+                  return (
+                    <Polyline
+                      key={shortid.generate()}
+                      color={"#ffc107"}
+                      opacity={poseGraphOpacity}
+                      positions={coords}
+                      weight={7}
+                    />
+                  );
+                })}
+                {/* Current path considered for merging */}
+                <Pane
+                  style={{
+                    zIndex: 500, // \todo Magic number.
+                  }}
+                >
+                  <Polyline
+                    color={"#bfff00"}
+                    opacity={poseGraphOpacity}
+                    positions={this._extractVertices(
+                      mergePath,
+                      this.points
+                    ).map((v) => [v.lat, v.lng])}
+                    weight={5}
+                  />
+                </Pane>
+                {/* Robot marker */}
+                {robotReady && (
+                  <RotatedMarker
+                    position={robotLocation}
+                    rotationAngle={robotOrientation}
+                    icon={icon({
+                      iconUrl: robotIcon,
+                      iconSize: [40, 40],
+                    })}
+                    opacity={0.85}
+                    zIndexOffset={1500}
                   />
                 )}
-                {graphPinLatLng !== null && (
-                  <Marker
-                    position={graphPinLatLng}
-                    icon={pinGraphMarkerIcon}
-                    opacity={poseGraphOpacity}
+                {/* Target robot marker for merging*/}
+                {robotReady && targetVertex !== null && (
+                  <RotatedMarker
+                    position={targetLocation}
+                    rotationAngle={targetOrientation}
+                    icon={icon({
+                      iconUrl: targetIcon,
+                      iconSize: [40, 40],
+                    })}
+                    onClick={() => this._submitMerge()}
+                    opacity={0.85}
+                    zIndexOffset={1600}
                   />
+                )}
+                {/* Selected vertices for a repeat goal being added */}
+                {addingGoalType === "Repeat" &&
+                  addingGoalPath.map((id, idx) => {
+                    if (!this.points.has(id)) return null;
+                    return (
+                      <Marker
+                        key={shortid.generate()}
+                        position={this.points.get(id)}
+                        icon={pathIcon}
+                        opacity={0.8}
+                      />
+                    );
+                  })}
+                {/* Selected vertices for a repeat goal being selected (already added) */}
+                {selectedGoalPath.map((id, idx) => {
+                  if (!this.points.has(id)) return null;
+                  return (
+                    <Marker
+                      key={shortid.generate()}
+                      position={this.points.get(id)}
+                      icon={pathIcon2}
+                      opacity={0.8}
+                    />
+                  );
+                })}
+                {/* polylines that displays the graph pins */}
+                {graphPins.map((pin) => {
+                  return (
+                    <Pane
+                      key={shortid.generate()}
+                      style={{
+                        zIndex: 500, // \todo Magic number.
+                      }}
+                    >
+                      {/* the pin on first vertex is undefined when the graph is empty (should be the only undefined case) */}
+                      {this.points.get(pin.id) !== undefined && (
+                        <>
+                          <Marker
+                            icon={pinGraphMarkerIcon}
+                            opacity={poseGraphOpacity}
+                            position={pin.latLng}
+                          />
+                          <Polyline
+                            color={"#bfff00"}
+                            opacity={poseGraphOpacity}
+                            positions={[this.points.get(pin.id), pin.latLng]}
+                            weight={5}
+                          />
+                        </>
+                      )}
+                    </Pane>
+                  );
+                })}
+                {/* markers that displays the current pin to be added to the graph */}
+                {pinGraph && (
+                  <>
+                    {graphPinVertex !== null && (
+                      <Marker
+                        position={this.points.get(graphPinVertex)}
+                        icon={pinGraphIcon}
+                        opacity={poseGraphOpacity}
+                      />
+                    )}
+                    {graphPinLatLng !== null && (
+                      <Marker
+                        position={graphPinLatLng}
+                        icon={pinGraphMarkerIcon}
+                        opacity={poseGraphOpacity}
+                      />
+                    )}
+                  </>
                 )}
               </>
             )}
+            {/* A copy of the graph used for alignment */}
+            {moveMap && !zooming && (
+              <Pane // Change the transform style of pane to re-position the graph.
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  left: "0",
+                  transformOrigin: this._getTransformOriginString(),
+                  transform: this._getTransformString(),
+                }}
+              >
+                {/* Graph paths */}
+                {moveMapPaths.map((path, idx) => {
+                  let vertices = this._extractVertices(path, this.points);
+                  let coords = vertices.map((v) => [v.lat, v.lng]);
+                  return (
+                    <Polyline
+                      color={"#ffc107"}
+                      opacity={poseGraphOpacity}
+                      key={shortid.generate()}
+                      positions={coords}
+                      weight={5}
+                    />
+                  );
+                })}
+              </Pane>
+            )}
           </>
-        )}
-        {/* A copy of the graph used for alignment */}
-        {moveMap && !zooming && (
-          <Pane // Change the transform style of pane to re-position the graph.
-            style={{
-              position: "absolute",
-              top: "0",
-              left: "0",
-              transformOrigin: this._getTransformOriginString(),
-              transform: this._getTransformString(),
-            }}
-          >
-            {/* Graph paths */}
-            {moveMapPaths.map((path, idx) => {
-              let vertices = this._extractVertices(path, this.points);
-              let coords = vertices.map((v) => [v.lat, v.lng]);
-              return (
-                <Polyline
-                  color={"#ffc107"}
-                  opacity={poseGraphOpacity}
-                  key={shortid.generate()}
-                  positions={coords}
-                  weight={5}
-                />
-              );
-            })}
-          </Pane>
         )}
       </LeafletMap>
     );
@@ -824,20 +845,22 @@ class GraphMap extends React.Component {
    */
   _onMapClick(e) {
     this.setState((state, props) => {
-      // Check if we are selecting a latlng during graph pinning
-      if (props.graphPinType === "latlng") props.setGraphPinLatLng(e.latlng);
+      if (props.mode === "vtr") {
+        // Check if we are selecting a latlng during graph pinning
+        if (props.graphPinType === "latlng") props.setGraphPinLatLng(e.latlng);
 
-      // Find the closest vertex
-      let best = this._getClosestPoint(e.latlng);
-      if (best.target === null) return;
+        // Find the closest vertex
+        let best = this._getClosestPoint(e.latlng);
+        if (best.target === null) return;
 
-      // Check if we are selecting a vertex during graph pinning
-      if (props.graphPinType === "vertex")
-        props.setGraphPinVertex(best.target.id);
+        // Check if we are selecting a vertex during graph pinning
+        if (props.graphPinType === "vertex")
+          props.setGraphPinVertex(best.target.id);
 
-      // Check if we are choosing a repeat path
-      if (props.addingGoalType === "Repeat")
-        props.setAddingGoalPath([...props.addingGoalPath, best.target.id]);
+        // Check if we are choosing a repeat path
+        if (props.addingGoalType === "Repeat")
+          props.setAddingGoalPath([...props.addingGoalPath, best.target.id]);
+      }
     });
   }
 
@@ -868,8 +891,8 @@ class GraphMap extends React.Component {
     }
   }
 
-  /** Helper function to find user selected paths for merging.
-   *
+  /**
+   * @brief Helper function to find user selected paths for merging.
    * @param {Object} source Starting node.
    * @param {array} dests Array of destinations (start & end).
    */
@@ -911,7 +934,7 @@ class GraphMap extends React.Component {
     return paths;
   }
 
-  /** Adds markers for merging to the map. */
+  /** @brief Adds markers for merging to the map. */
   _startMerge() {
     console.debug("[GraphMap] _startMerge");
     // Initial position of the start, center and end markers based on current map.
@@ -1374,15 +1397,17 @@ class GraphMap extends React.Component {
    * distance between transMarker and rotMarker.
    */
   _onZoomStart() {
-    this.setState((state) => {
-      if (this.scaleMarker) this.scaleMarker.setOpacity(0);
-      if (this.rotMarker) {
-        // Remember the current position of rotMarker relative to transMarker so
-        // that the pixel distance between the two do not change after zooming.
-        this.rotMarker.setOpacity(0);
-        let transLocP = this.map.latLngToLayerPoint(state.transLoc);
-        let rotLocP = this.map.latLngToLayerPoint(state.rotLoc);
-        this.transRotDiffP = rotLocP.subtract(transLocP);
+    this.setState((state, props) => {
+      if (props.mode === "vtr") {
+        if (this.scaleMarker) this.scaleMarker.setOpacity(0);
+        if (this.rotMarker) {
+          // Remember the current position of rotMarker relative to transMarker so
+          // that the pixel distance between the two do not change after zooming.
+          this.rotMarker.setOpacity(0);
+          let transLocP = this.map.latLngToLayerPoint(state.transLoc);
+          let rotLocP = this.map.latLngToLayerPoint(state.rotLoc);
+          this.transRotDiffP = rotLocP.subtract(transLocP);
+        }
       }
       return { zooming: true };
     });
@@ -1393,20 +1418,21 @@ class GraphMap extends React.Component {
    * distance between transMarker and rotMarker in pixel remains unchanged.
    */
   _onZoomEnd() {
-    this.setState((state) => {
-      if (this.scaleMarker)
-        this.scaleMarker.setOpacity(moveGraphMarkerOpacity2);
-      if (this.rotMarker) {
-        // Maintain the relative position of rotMarker and transMarker
-        let transLocP = this.map.latLngToLayerPoint(state.transLoc);
-        let newRotLocP = transLocP.add(this.transRotDiffP);
-        let newRotLoc = this.map.layerPointToLatLng(newRotLocP);
-        this.rotMarker.setLatLng(newRotLoc);
-        this.rotMarker.setOpacity(moveGraphMarkerOpacity);
-        return { zooming: false, rotLoc: newRotLoc };
-      } else {
-        return { zooming: false };
+    this.setState((state, props) => {
+      if (props.mode === "vtr") {
+        if (this.scaleMarker)
+          this.scaleMarker.setOpacity(moveGraphMarkerOpacity2);
+        if (this.rotMarker) {
+          // Maintain the relative position of rotMarker and transMarker
+          let transLocP = this.map.latLngToLayerPoint(state.transLoc);
+          let newRotLocP = transLocP.add(this.transRotDiffP);
+          let newRotLoc = this.map.layerPointToLatLng(newRotLocP);
+          this.rotMarker.setLatLng(newRotLoc);
+          this.rotMarker.setOpacity(moveGraphMarkerOpacity);
+          return { zooming: false, rotLoc: newRotLoc };
+        }
       }
+      return { zooming: false };
     });
   }
 

@@ -18,7 +18,7 @@ class ToolsMenu extends React.Component {
   }
 
   render() {
-    const { toolsState, selectTool, requireConf } = this.props;
+    const { mode, toolsState, selectTool, requireConf } = this.props;
     return (
       <>
         <Box
@@ -33,42 +33,46 @@ class ToolsMenu extends React.Component {
           // Spacing
           m={0.25}
         >
-          <Box m={0.25} width={150}>
-            <Button
-              color={toolsState.moveRobot ? "secondary" : "primary"}
-              disableElevation={true}
-              fullWidth={true}
-              startIcon={<AndroidIcon />}
-              variant={"contained"}
-              onClick={() => selectTool("moveRobot")}
-            >
-              Move Robot
-            </Button>
-          </Box>
-          <Box m={0.25} width={150}>
-            <Button
-              color={toolsState.moveMap ? "secondary" : "primary"}
-              disableElevation={true}
-              fullWidth={true}
-              startIcon={<TimelineIcon />}
-              variant={"contained"}
-              onClick={() => selectTool("moveMap")}
-            >
-              Move Graph
-            </Button>
-          </Box>
-          <Box m={0.25} width={150}>
-            <Button
-              color={toolsState.pinGraph ? "secondary" : "primary"}
-              disableElevation={true}
-              fullWidth={true}
-              startIcon={<CancelIcon />}
-              variant={"contained"}
-              onClick={() => selectTool("pinGraph")}
-            >
-              Pin Graph
-            </Button>
-          </Box>
+          {mode === "vtr" && (
+            <>
+              <Box m={0.25} width={150}>
+                <Button
+                  color={toolsState.moveRobot ? "secondary" : "primary"}
+                  disableElevation={true}
+                  fullWidth={true}
+                  startIcon={<AndroidIcon />}
+                  variant={"contained"}
+                  onClick={() => selectTool("moveRobot")}
+                >
+                  Move Robot
+                </Button>
+              </Box>
+              <Box m={0.25} width={150}>
+                <Button
+                  color={toolsState.moveMap ? "secondary" : "primary"}
+                  disableElevation={true}
+                  fullWidth={true}
+                  startIcon={<TimelineIcon />}
+                  variant={"contained"}
+                  onClick={() => selectTool("moveMap")}
+                >
+                  Move Graph
+                </Button>
+              </Box>
+              <Box m={0.25} width={150}>
+                <Button
+                  color={toolsState.pinGraph ? "secondary" : "primary"}
+                  disableElevation={true}
+                  fullWidth={true}
+                  startIcon={<CancelIcon />}
+                  variant={"contained"}
+                  onClick={() => selectTool("pinGraph")}
+                >
+                  Pin Graph
+                </Button>
+              </Box>
+            </>
+          )}
         </Box>
         <Box
           // Positions

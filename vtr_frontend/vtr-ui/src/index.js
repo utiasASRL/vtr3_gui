@@ -100,30 +100,9 @@ class VTRUI extends React.Component {
         )}
         {mode !== null && (
           <>
-            <GoalManager
-              // Socket IO
-              socket={socket}
-              socketConnected={socketConnected}
-              // Select path for repeat
-              addingGoalPath={addingGoalPath}
-              addingGoalType={addingGoalType}
-              selectedGoalPath={selectedGoalPath}
-              setAddingGoalPath={this._setAddingGoalPath.bind(this)}
-              setAddingGoalType={this._setAddingGoalType.bind(this)}
-              setSelectedGoalPath={this._setSelectedGoalPath.bind(this)}
-              setMergePath={this._setMergePath.bind(this)}
-              // Tools for merge and localize
-              requireConf={this._requireConfirmation.bind(this)}
-              selectTool={this._selectTool.bind(this)}
-              toolsState={toolsState}
-            ></GoalManager>
-            <ToolsMenu
-              requireConf={this._requireConfirmation.bind(this)}
-              selectTool={this._selectTool.bind(this)}
-              toolsState={toolsState}
-            ></ToolsMenu>
             <GraphMap
               className={classes.graphMap}
+              mode={mode}
               // Socket IO
               socket={socket}
               socketConnected={socketConnected}
@@ -151,25 +130,54 @@ class VTRUI extends React.Component {
               setGraphPinVertex={this._setGraphPinVertex.bind(this)}
               setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
             />
-            <GraphPins
-              // Socket IO
-              socket={socket}
-              //
-              addressConf={this._addressConfirmation.bind(this)}
-              userConfirmed={userConfirmed}
-              pinGraph={toolsState.pinGraph}
-              graphPins={graphPins}
-              graphPinType={graphPinType}
-              graphPinLatLng={graphPinLatLng}
-              graphPinVertex={graphPinVertex}
-              addGraphPin={this._addGraphPin.bind(this)}
-              removeGraphPin={this._removeGraphPin.bind(this)}
-              setGraphPins={this._setGraphPins.bind(this)}
-              setGraphPinType={this._setGraphPinType.bind(this)}
-              setGraphPinVertex={this._setGraphPinVertex.bind(this)}
-              setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
-              resetGraphPin={this._resetGraphPin.bind(this)}
-            />
+            <ToolsMenu
+              mode={mode}
+              requireConf={this._requireConfirmation.bind(this)}
+              selectTool={this._selectTool.bind(this)}
+              toolsState={toolsState}
+            ></ToolsMenu>
+            {/* VTR only: a panel that manage teach and repeat goals.*/}
+            {mode === "vtr" && (
+              <GoalManager
+                // Socket IO
+                socket={socket}
+                socketConnected={socketConnected}
+                // Select path for repeat
+                addingGoalPath={addingGoalPath}
+                addingGoalType={addingGoalType}
+                selectedGoalPath={selectedGoalPath}
+                setAddingGoalPath={this._setAddingGoalPath.bind(this)}
+                setAddingGoalType={this._setAddingGoalType.bind(this)}
+                setSelectedGoalPath={this._setSelectedGoalPath.bind(this)}
+                setMergePath={this._setMergePath.bind(this)}
+                // Tools for merge and localize
+                requireConf={this._requireConfirmation.bind(this)}
+                selectTool={this._selectTool.bind(this)}
+                toolsState={toolsState}
+              ></GoalManager>
+            )}
+            {/* VTR only: a panel that displays a list of pose graph pins.*/}
+            {mode === "vtr" && (
+              <GraphPins
+                // Socket IO
+                socket={socket}
+                //
+                addressConf={this._addressConfirmation.bind(this)}
+                userConfirmed={userConfirmed}
+                pinGraph={toolsState.pinGraph}
+                graphPins={graphPins}
+                graphPinType={graphPinType}
+                graphPinLatLng={graphPinLatLng}
+                graphPinVertex={graphPinVertex}
+                addGraphPin={this._addGraphPin.bind(this)}
+                removeGraphPin={this._removeGraphPin.bind(this)}
+                setGraphPins={this._setGraphPins.bind(this)}
+                setGraphPinType={this._setGraphPinType.bind(this)}
+                setGraphPinVertex={this._setGraphPinVertex.bind(this)}
+                setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
+                resetGraphPin={this._resetGraphPin.bind(this)}
+              />
+            )}
           </>
         )}
       </div>
