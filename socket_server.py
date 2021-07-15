@@ -4,38 +4,53 @@ import logging
 import flask
 import flask_socketio
 
-import rclpy
+# Try importing vtr specific modules and variables, or set them to None
+try:
+  import rclpy
 
-from action_msgs.msg import GoalStatus
+  from vtr_messages.action import Mission
+  from vtr_messages.srv import MissionCmd
+  from vtr_messages.msg import MissionStatus
+  import vtr_mission_planning
+  from . import graph_pb2
+  from . import utils
 
-import vtr_mission_planning
-from vtr_interface import SOCKET_ADDRESS, SOCKET_PORT
-from vtr_interface import graph_pb2
-from vtr_interface import utils
-from vtr_messages.action import Mission
-from vtr_messages.srv import MissionPause, MissionCmd
-from vtr_messages.msg import MissionStatus
+  # ROS2 node
+  rclpy.init()
+  node = rclpy.create_node("socket_server")
+  node.get_logger().info('Created node - socket_server')
+except:
+  graph_pb2 = None
+  utils = None
+  Mission = None
+  MissionCmd = None
+  MissionStatus = None
+  vtr_mission_planning = None
+  node = None
+
+## Config the socket io server
+# socket io server address and port
+SOCKET_ADDRESS = 'localhost'
+SOCKET_PORT = 5201
 
 logging.basicConfig(level=logging.WARNING)
 
 log = logging.getLogger('SocketServer')
 log.setLevel(logging.INFO)
 
-# Web server config
-app = flask.Flask(__name__)
-app.config['DEBUG'] = True
-app.secret_key = 'asecretekey'
-
 elog = logging.getLogger('engineio')
 slog = logging.getLogger('socketio')
 rlog = logging.getLogger('requests')
-
 elog.setLevel(logging.ERROR)
 slog.setLevel(logging.ERROR)
 rlog.setLevel(logging.ERROR)
 
-logging.getLogger('werkzeug').setLevel(logging.ERROR)
+app = flask.Flask(__name__)
+app.config['DEBUG'] = True
+app.secret_key = 'asecretekey'
+
 app.logger.setLevel(logging.ERROR)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 socketio = flask_socketio.SocketIO(app,
                                    logger=slog,
@@ -44,10 +59,10 @@ socketio = flask_socketio.SocketIO(app,
                                    ping_timeout=2,
                                    cors_allowed_origins="*")
 
-# ROS2 node
-rclpy.init()
-node = rclpy.create_node("socket_server")
-node.get_logger().info('Created node - socket_server')
+
+@app.route('/')
+def main():
+  return "This is a socket-only API server."
 
 
 @socketio.on('connect')
@@ -65,6 +80,9 @@ def kill():
   """Stops the server politely"""
   log.info("Received termination request. Shutting down!")
   socketio.stop()
+
+
+##### VTR specific calls #####
 
 
 @socketio.on('goal/add')
@@ -256,13 +274,6 @@ def broadcast_error(goal_id, goal_status):
   :param goal_status Status enum representing the failure reason
   """
   log.info('Broadcast error.')
-  # if goal_status == GoalStatus.ABORTED:
-  #   msg = "An internal error has occurred!"
-  # elif goal_status == GoalStatus.LOST:
-  #   msg = "Goal was lost; check network connectivity"
-  # elif goal_status == GoalStatus.REJECTED:
-  #   msg = "Goal was malformed/missing information; please try again"
-  # else:
   msg = "An unknown error occurred; check the console for more information"
   log.warning(
       "An unexpected goal status (%d) occurred while broadcasting errors",
@@ -462,13 +473,12 @@ def broadcast_overlay():
   # socketio.emit(u"overlay/refresh")
 
 
-@app.route('/')
 def main():
-  return "This is a socket-only API server."
-
-
-if __name__ == '__main__':
-  log.info("Launching socket server.")
+  log.info("Launching the socket server.")
 
   # TODO: Server runs on all interfaces.  Can we assume a trusted network?
   socketio.run(app, host=SOCKET_ADDRESS, port=SOCKET_PORT, use_reloader=False)
+
+
+if __name__ == '__main__':
+  main()

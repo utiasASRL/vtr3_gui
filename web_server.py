@@ -10,42 +10,48 @@ import requests
 from requests.exceptions import RequestException
 from PIL import Image
 
-import rclpy
+## Try importing vtr specific modules and variables, or set them to None
+try:
+  import rclpy
 
-from vtr_interface import UI_ADDRESS, UI_PORT
-from vtr_interface import utils
-from vtr_interface import graph_pb2
+  from vtr_messages.msg import GraphComponent
+  import vtr_mission_planning
+  from . import graph_pb2
+  from . import utils
 
-import vtr_mission_planning
-from vtr_messages.msg import GraphComponent
+  # ROS2 node
+  rclpy.init()
+  node = rclpy.create_node("web_server")
+  node.get_logger().info('Created node - web_server')
+except:
+  graph_pb2 = None
+  utils = None
+  GraphComponent = None
+  vtr_mission_planning = None
+  node = None
+
+## Config the web server
+# web server address and port
+UI_ADDRESS = '0.0.0.0'
+UI_PORT = 5200
 
 logging.basicConfig(level=logging.WARNING)
 
 log = logging.getLogger('WebServer')
 log.setLevel(logging.INFO)
 
-# Web server config
 app = flask.Flask(__name__,
                   static_folder="vtr-ui/build",
                   template_folder="vtr-ui/build",
                   static_url_path="")
 app.config['DEBUG'] = True
-
 app.config['CACHE'] = True
 app.config['CACHE_PATH'] = osp.abspath(osp.join(osp.dirname(__file__), 'cache'))
-
-app.config['PROTO_PATH'] = osp.abspath(
-    osp.join(osp.dirname(__file__), '../vtr_interface/proto'))
-
+app.config['PROTO_PATH'] = osp.abspath(osp.dirname(__file__))
 app.secret_key = 'asecretekey'
 
 app.logger.setLevel(logging.ERROR)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
-
-# ROS2 node
-rclpy.init()
-node = rclpy.create_node("ui_server")
-node.get_logger().info('Created node - ui_server')
 
 
 @app.route("/")
@@ -115,6 +121,9 @@ def tile_cache(s, x, y, z):
 
   log.debug("Tile {%s,%s,%s} not in offline cache", x, y, z)
   flask.abort(404)
+
+
+##### VTR specific calls #####
 
 
 @app.route('/api/map/<seq>')
@@ -211,8 +220,12 @@ def get_goals():
   return flask.jsonify(goals=rclient.goals, status=rclient.status)
 
 
-if __name__ == '__main__':
-  log.info("Launching UI server.")
+def main():
+  log.info("Launching the web server.")
 
-  # TODO: Server runs on all interfaces.  Can we assume a trusted network?
+  # TODO: Server runs on all interfaces. Can we assume a trusted network?
   app.run(threaded=True, host=UI_ADDRESS, port=UI_PORT, use_reloader=False)
+
+
+if __name__ == '__main__':
+  main()
