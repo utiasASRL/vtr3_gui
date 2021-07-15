@@ -2,12 +2,16 @@
 
 import socketio
 
-from vtr_interface import SOCKET_ADDRESS, SOCKET_PORT
 from vtr_mission_planning.mission_client import MissionClient
 from vtr_mission_planning.ros_manager import RosManager
 from vtr_messages.msg import RobotStatus, GraphUpdate, GraphPath
 
 import logging
+
+# socket io server address and port
+# NOTE this must match the ones specified in socket_server.py
+SOCKET_ADDRESS = 'localhost'
+SOCKET_PORT = 5201
 
 log = logging.getLogger('SocketClient')
 log.setLevel(logging.INFO)

@@ -6,6 +6,7 @@ import "fontsource-roboto"; // for Material UI library, the font package
 import { withStyles } from "@material-ui/core/styles";
 
 import "./index.css";
+import ModeSelector from "./components/ModeSelector";
 import GraphMap from "./components/graph/GraphMap";
 import GoalManager from "./components/goal/GoalManager";
 import ToolsMenu from "./components/menu/Toolsmenu";
@@ -34,6 +35,8 @@ class VTRUI extends React.Component {
     super(props);
 
     this.state = {
+      // Operation mode ["vtr", ...]
+      mode: null,
       // Socket IO
       socketConnected: false,
       // Tools menu
@@ -75,6 +78,7 @@ class VTRUI extends React.Component {
   render() {
     const { classes } = this.props;
     const {
+      mode,
       addingGoalPath,
       addingGoalType,
       selectedGoalPath,
@@ -91,78 +95,94 @@ class VTRUI extends React.Component {
     } = this.state;
     return (
       <div className={classes.vtrUI}>
-        <GoalManager
-          // Socket IO
-          socket={socket}
-          socketConnected={socketConnected}
-          // Select path for repeat
-          addingGoalPath={addingGoalPath}
-          addingGoalType={addingGoalType}
-          selectedGoalPath={selectedGoalPath}
-          setAddingGoalPath={this._setAddingGoalPath.bind(this)}
-          setAddingGoalType={this._setAddingGoalType.bind(this)}
-          setSelectedGoalPath={this._setSelectedGoalPath.bind(this)}
-          setMergePath={this._setMergePath.bind(this)}
-          // Tools for merge and localize
-          requireConf={this._requireConfirmation.bind(this)}
-          selectTool={this._selectTool.bind(this)}
-          toolsState={toolsState}
-        ></GoalManager>
-        <ToolsMenu
-          requireConf={this._requireConfirmation.bind(this)}
-          selectTool={this._selectTool.bind(this)}
-          toolsState={toolsState}
-        ></ToolsMenu>
-        <GraphMap
-          className={classes.graphMap}
-          // Socket IO
-          socket={socket}
-          socketConnected={socketConnected}
-          // Select path for repeat
-          addingGoalPath={addingGoalPath}
-          addingGoalType={addingGoalType}
-          selectedGoalPath={selectedGoalPath}
-          mergePath={mergePath}
-          setAddingGoalPath={this._setAddingGoalPath.bind(this)}
-          setMergePath={this._setMergePath.bind(this)}
-          // Several graph tools from the tools menu
-          merge={toolsState.merge}
-          relocalize={toolsState.relocalize}
-          moveRobot={toolsState.moveRobot}
-          moveMap={toolsState.moveMap}
-          pinGraph={toolsState.pinGraph}
-          addressConf={this._addressConfirmation.bind(this)}
-          userConfirmed={userConfirmed}
-          // Graph pins
-          graphPins={graphPins}
-          graphPinType={graphPinType}
-          graphPinLatLng={graphPinLatLng}
-          graphPinVertex={graphPinVertex}
-          setGraphPins={this._setGraphPins.bind(this)}
-          setGraphPinVertex={this._setGraphPinVertex.bind(this)}
-          setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
-        />
-        <GraphPins
-          // Socket IO
-          socket={socket}
-          //
-          addressConf={this._addressConfirmation.bind(this)}
-          userConfirmed={userConfirmed}
-          pinGraph={toolsState.pinGraph}
-          graphPins={graphPins}
-          graphPinType={graphPinType}
-          graphPinLatLng={graphPinLatLng}
-          graphPinVertex={graphPinVertex}
-          addGraphPin={this._addGraphPin.bind(this)}
-          removeGraphPin={this._removeGraphPin.bind(this)}
-          setGraphPins={this._setGraphPins.bind(this)}
-          setGraphPinType={this._setGraphPinType.bind(this)}
-          setGraphPinVertex={this._setGraphPinVertex.bind(this)}
-          setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
-          resetGraphPin={this._resetGraphPin.bind(this)}
-        />
+        {mode === null && (
+          <ModeSelector setMode={this._setMode.bind(this)}></ModeSelector>
+        )}
+        {mode !== null && (
+          <>
+            <GoalManager
+              // Socket IO
+              socket={socket}
+              socketConnected={socketConnected}
+              // Select path for repeat
+              addingGoalPath={addingGoalPath}
+              addingGoalType={addingGoalType}
+              selectedGoalPath={selectedGoalPath}
+              setAddingGoalPath={this._setAddingGoalPath.bind(this)}
+              setAddingGoalType={this._setAddingGoalType.bind(this)}
+              setSelectedGoalPath={this._setSelectedGoalPath.bind(this)}
+              setMergePath={this._setMergePath.bind(this)}
+              // Tools for merge and localize
+              requireConf={this._requireConfirmation.bind(this)}
+              selectTool={this._selectTool.bind(this)}
+              toolsState={toolsState}
+            ></GoalManager>
+            <ToolsMenu
+              requireConf={this._requireConfirmation.bind(this)}
+              selectTool={this._selectTool.bind(this)}
+              toolsState={toolsState}
+            ></ToolsMenu>
+            <GraphMap
+              className={classes.graphMap}
+              // Socket IO
+              socket={socket}
+              socketConnected={socketConnected}
+              // Select path for repeat
+              addingGoalPath={addingGoalPath}
+              addingGoalType={addingGoalType}
+              selectedGoalPath={selectedGoalPath}
+              mergePath={mergePath}
+              setAddingGoalPath={this._setAddingGoalPath.bind(this)}
+              setMergePath={this._setMergePath.bind(this)}
+              // Several graph tools from the tools menu
+              merge={toolsState.merge}
+              relocalize={toolsState.relocalize}
+              moveRobot={toolsState.moveRobot}
+              moveMap={toolsState.moveMap}
+              pinGraph={toolsState.pinGraph}
+              addressConf={this._addressConfirmation.bind(this)}
+              userConfirmed={userConfirmed}
+              // Graph pins
+              graphPins={graphPins}
+              graphPinType={graphPinType}
+              graphPinLatLng={graphPinLatLng}
+              graphPinVertex={graphPinVertex}
+              setGraphPins={this._setGraphPins.bind(this)}
+              setGraphPinVertex={this._setGraphPinVertex.bind(this)}
+              setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
+            />
+            <GraphPins
+              // Socket IO
+              socket={socket}
+              //
+              addressConf={this._addressConfirmation.bind(this)}
+              userConfirmed={userConfirmed}
+              pinGraph={toolsState.pinGraph}
+              graphPins={graphPins}
+              graphPinType={graphPinType}
+              graphPinLatLng={graphPinLatLng}
+              graphPinVertex={graphPinVertex}
+              addGraphPin={this._addGraphPin.bind(this)}
+              removeGraphPin={this._removeGraphPin.bind(this)}
+              setGraphPins={this._setGraphPins.bind(this)}
+              setGraphPinType={this._setGraphPinType.bind(this)}
+              setGraphPinVertex={this._setGraphPinVertex.bind(this)}
+              setGraphPinLatLng={this._setGraphPinLatLng.bind(this)}
+              resetGraphPin={this._resetGraphPin.bind(this)}
+            />
+          </>
+        )}
       </div>
     );
+  }
+
+  /**
+   * @brief Sets the operation mode.
+   * @param {string} mode operation mode
+   */
+  _setMode(mode) {
+    console.log("Setting operation mode (i.e. project) to:", mode);
+    this.setState({ mode: mode });
   }
 
   /**

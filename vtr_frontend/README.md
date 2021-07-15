@@ -19,12 +19,12 @@ See [here](./vtr-ui/README.md). **TODO**: integrate UI build into CMakeLists.txt
 Since VT&R3 is under development, the user interface still relies on VT&R2.1. First launch VT&R2.1 and then
 
 ```bash
-rosrun vtr_interface ui_server.py /Navigation:=/ShamNav # ShamNav is the default namespace of VTR2.
+rosrun vtr_interface web_server.py /Navigation:=/ShamNav # ShamNav is the default namespace of VTR2.
 ```
 
 ## Development
 
-VTR3 user interface is a single page web app tested with Google Chrome and Firefox. The backend server uses python [Flask](https://flask.palletsprojects.com/en/1.1.x/), and the implementation is [here](../src/vtr_interface/ui_server.py). The frontend is written in html, javascript and css, and it mainly uses the following libraries:
+VTR3 user interface is a single page web app tested with Google Chrome and Firefox. The backend server uses python [Flask](https://flask.palletsprojects.com/en/1.1.x/), and the implementation is [here](../src/vtr_interface/web_server.py). The frontend is written in html, javascript and css, and it mainly uses the following libraries:
 
 - [React](https://reactjs.org/): A JavaScript library for building user interfaces.
   - Used for designing the entire user interface.
