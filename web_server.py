@@ -14,10 +14,10 @@ from PIL import Image
 try:
   import rclpy
 
-  from vtr_interface import graph_pb2
-  from vtr_interface import utils
   from vtr_messages.msg import GraphComponent
   import vtr_mission_planning
+  from . import graph_pb2
+  from . import utils
 
   # ROS2 node
   rclpy.init()
@@ -47,8 +47,7 @@ app = flask.Flask(__name__,
 app.config['DEBUG'] = True
 app.config['CACHE'] = True
 app.config['CACHE_PATH'] = osp.abspath(osp.join(osp.dirname(__file__), 'cache'))
-app.config['PROTO_PATH'] = osp.abspath(
-    osp.join(osp.dirname(__file__), '../vtr_interface/proto'))
+app.config['PROTO_PATH'] = osp.abspath(osp.dirname(__file__))
 app.secret_key = 'asecretekey'
 
 app.logger.setLevel(logging.ERROR)
@@ -221,8 +220,12 @@ def get_goals():
   return flask.jsonify(goals=rclient.goals, status=rclient.status)
 
 
-if __name__ == '__main__':
+def main():
   log.info("Launching the web server.")
 
   # TODO: Server runs on all interfaces. Can we assume a trusted network?
   app.run(threaded=True, host=UI_ADDRESS, port=UI_PORT, use_reloader=False)
+
+
+if __name__ == '__main__':
+  main()

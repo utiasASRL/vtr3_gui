@@ -8,12 +8,12 @@ import flask_socketio
 try:
   import rclpy
 
-  from vtr_interface import graph_pb2
-  from vtr_interface import utils
   from vtr_messages.action import Mission
   from vtr_messages.srv import MissionCmd
   from vtr_messages.msg import MissionStatus
   import vtr_mission_planning
+  from . import graph_pb2
+  from . import utils
 
   # ROS2 node
   rclpy.init()
@@ -473,8 +473,12 @@ def broadcast_overlay():
   # socketio.emit(u"overlay/refresh")
 
 
-if __name__ == '__main__':
+def main():
   log.info("Launching the socket server.")
 
   # TODO: Server runs on all interfaces.  Can we assume a trusted network?
   socketio.run(app, host=SOCKET_ADDRESS, port=SOCKET_PORT, use_reloader=False)
+
+
+if __name__ == '__main__':
+  main()
