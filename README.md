@@ -121,7 +121,7 @@ module.exports = function(api, opts) {
           exclude: ['transform-typeof-symbol'],
         },
       ],
-      //added preset-flow
+      //⚠️ added preset-flow
        [require('@babel/preset-flow').default],
     ].filter(Boolean),
     plugins: [
