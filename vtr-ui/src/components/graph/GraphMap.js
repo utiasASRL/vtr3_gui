@@ -11,6 +11,8 @@ import {
   TileLayer,
   Polyline,
   ZoomControl,
+  FeatureGroup,
+  LayersControl,
 } from "react-leaflet";
 import { kdTree } from "kd-tree-javascript";
 
@@ -27,6 +29,9 @@ import moveMapRotationSvg from "../../images/move-map-rotation.svg";
 import moveMapScaleSvg from "../../images/move-map-scale.svg";
 import pinGraphIconSvg from "../../images/pin-graph-icon.svg";
 import pinGraphMarkerSvg from "../../images/pin-graph-marker.svg";
+import HeatmapLayer from "../../../node_modules/react-leaflet-heatmap-layer/src/HeatmapLayer";
+import { addressPoints } from "../../../node_modules/react-leaflet-heatmap-layer/example/realworld.10000.js"
+
 
 const pathIcon = new L.Icon({
   iconUrl: pathSvg,
@@ -290,26 +295,50 @@ class GraphMap extends React.Component {
 
     return (
       <LeafletMap
-        ref={this.setMap}
+        ref = {mode === "vtr" ? this.setMap : ""}
         bounds={[
           [lowerBound.lat, lowerBound.lng],
           [upperBound.lat, upperBound.lng],
         ]}
         center={mapCenter}
         onClick={this._onMapClick.bind(this)}
-        zoomControl={false}
+        zoomControl = {false}
       >
-        {/* leaflet map tiles */}
-        <TileLayer
-          maxNativeZoom={20}
-          maxZoom={22}
-          noWrap
-          subdomains="0123"
-          // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"  // default
-          url="/cache/tile/{s}/{x}/{y}/{z}"
-          // attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
-        />
+        <LayersControl>
+          <LayersControl.BaseLayer name="Base" checked>
+            {/* leaflet map tiles */}
+            <TileLayer
+              maxNativeZoom={20}
+              maxZoom={22}
+              noWrap
+              subdomains={mode === "vtr" ? "0123" : ['mt0', 'mt1', 'mt2', 'mt3'] }
+              // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"  // default
+              url={
+                mode === "vtr" ? "/cache/tile/{s}/{x}/{y}/{z}" : "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+              }
+              attribution= {
+                mode === "vtr" ? "" : 
+                  'Imagery @2021 TerraMetrics, Map data @2021 INEGI'
+              }
+            />
+         </LayersControl.BaseLayer>
+	{mode !== "vtr" && (
+            <LayersControl.Overlay name="Heatmap" checked>
+              <FeatureGroup color="purple">
+                <HeatmapLayer
+                  fitBoundsOnLoad
+                  fitBoundsOnUpdate
+                  points={addressPoints}
+                  longitudeExtractor={m => m[1]}
+                  latitudeExtractor={m => m[0]}
+                  intensityExtractor={m => parseFloat(m[2])}
+                />
+              </FeatureGroup>
+            </LayersControl.Overlay>
+          )}
+        </LayersControl>
         <ZoomControl position="bottomright" />
+
         {/* VTR specific: posegraph, robot, etc */}
         {mode === "vtr" && (
           <>
