@@ -22,7 +22,7 @@ cd vtr-ui && npm install .# install dependencies
 ```bash
 cd vtr-ui/node_modules/babel-preset-react-app/
 ```
-- then open dependencies.js, change it to the following
+- then open dependencies.js, change it to the following (changes are commmented out with !!!)
 ```javascript
 /**
  * Copyright (c) 2015-present, Facebook, Inc.
@@ -121,7 +121,7 @@ module.exports = function(api, opts) {
           exclude: ['transform-typeof-symbol'],
         },
       ],
-      //⚠️ added preset-flow
+      // !!! added preset-flow
        [require('@babel/preset-flow').default],
     ].filter(Boolean),
     plugins: [
@@ -170,11 +170,13 @@ module.exports = function(api, opts) {
           absoluteRuntime: absoluteRuntimePath,
         },
       ],
+      // !!! added flow-strip-types plugin
       [
         require('@babel/plugin-transform-flow-strip-types').default,
         false,
       ],
-       [
+      // !!! added class-properties plugin
+      [
         require('@babel/plugin-proposal-class-properties').default,
         {
           loose: true,
@@ -185,6 +187,8 @@ module.exports = function(api, opts) {
 };
 
 ```
+## Build the UI
+
 ```bash
 npm run build # "compile" javascripts
 ```
