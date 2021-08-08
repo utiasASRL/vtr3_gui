@@ -11,7 +11,7 @@ import GraphMap from "./components/graph/GraphMap";
 import GoalManager from "./components/goal/GoalManager";
 import ToolsMenu from "./components/menu/Toolsmenu";
 import GraphPins from "./components/menu/GraphPins";
-
+import ViewWaypoints from "./components/graph/ViewWaypoints"
 // SocketIO port is assumed to be UI port+1: (Number(window.location.port) + 1)
 const socket = io(window.location.hostname + ":5201");
 
@@ -136,6 +136,9 @@ class VTRUI extends React.Component {
               selectTool={this._selectTool.bind(this)}
               toolsState={toolsState}
             ></ToolsMenu>
+            {mode === "boat" && (
+              <ViewWaypoints></ViewWaypoints>
+            )}
             {/* VTR only: a panel that manage teach and repeat goals.*/}
             {mode === "vtr" && (
               <GoalManager

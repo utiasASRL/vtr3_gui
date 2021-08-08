@@ -31,7 +31,7 @@ import pinGraphIconSvg from "../../images/pin-graph-icon.svg";
 import pinGraphMarkerSvg from "../../images/pin-graph-marker.svg";
 import HeatmapLayer from "../../../node_modules/react-leaflet-heatmap-layer/src/HeatmapLayer";
 import { addressPoints } from "../../../node_modules/react-leaflet-heatmap-layer/example/realworld.10000.js"
-
+import ViewWaypoints from "./ViewWaypoints"
 
 const pathIcon = new L.Icon({
   iconUrl: pathSvg,
