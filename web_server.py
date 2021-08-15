@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import io
 import os
@@ -83,13 +83,17 @@ def tile_cache(s, x, y, z):
   if app.config['CACHE'] and osp.isfile(fpath):
     log.debug("Using cached tile {%s,%s,%s}", x, y, z)
     return flask.send_from_directory(fdir, fname, max_age=60 * 60 * 24 * 30)
-  # elif not app.config['OFFLINE']:
+
   headers = {
       'Accept': 'image/webp,image/*,*/*;q=0.8',
       'User-Agent': flask.request.user_agent.string
   }
   # url = 'https://khms' + s + '.googleapis.com/kh?v=199&hl=en-GB&x=' + x + '&y=' + y + '&z=' + z
-  url = 'http://mt1.google.com/vt/lyrs=y&x=' + x + '&y=' + y + '&z=' + z
+  # Google Map service
+  # url = 'http://mt1.google.com/vt/lyrs=y&x=' + x + '&y=' + y + '&z=' + z
+  # Open Street Map (mapnik) service
+  url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'.format(
+      z=z, y=y, x=x)
 
   try:
     res = requests.get(url, headers=headers, verify=False)
@@ -119,7 +123,6 @@ def tile_cache(s, x, y, z):
   else:
     log.warning("Tile {%s,%s,%s} did not exist on server", x, y, z)
 
-  log.debug("Tile {%s,%s,%s} not in offline cache", x, y, z)
   flask.abort(404)
 
 
