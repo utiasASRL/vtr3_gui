@@ -136,7 +136,8 @@ class VTRUI extends React.Component {
               selectTool={this._selectTool.bind(this)}
               toolsState={toolsState}
             ></ToolsMenu>
-            {mode === "boat" && (
+            {/*Might need this later, keeping it for now*/}
+            {mode === "none" && (
               <ViewWaypoints></ViewWaypoints>
             )}
             {/* VTR only: a panel that manage teach and repeat goals.*/}

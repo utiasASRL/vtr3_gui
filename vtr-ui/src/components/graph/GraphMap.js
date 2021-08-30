@@ -1,4 +1,5 @@
 import "leaflet/dist/leaflet.css";
+import '../../index.css';
 import shortid from "shortid";
 import protobuf from "protobufjs";
 import React from "react";
@@ -15,6 +16,7 @@ import {
   LayersControl,
 } from "react-leaflet";
 import { kdTree } from "kd-tree-javascript";
+import Box from "@material-ui/core/Box";
 
 import RotatedMarker from "./RotatedMarker"; // react-leaflet does not have rotatable marker
 import robotIcon from "../../images/arrow.svg";
@@ -29,9 +31,10 @@ import moveMapRotationSvg from "../../images/move-map-rotation.svg";
 import moveMapScaleSvg from "../../images/move-map-scale.svg";
 import pinGraphIconSvg from "../../images/pin-graph-icon.svg";
 import pinGraphMarkerSvg from "../../images/pin-graph-marker.svg";
+
 import HeatmapLayer from "../../../node_modules/react-leaflet-heatmap-layer/src/HeatmapLayer";
-import { addressPoints } from "../../../node_modules/react-leaflet-heatmap-layer/example/realworld.10000.js"
-import ViewWaypoints from "./ViewWaypoints"
+import { addressPoints } from "../../../node_modules/react-leaflet-heatmap-layer/example/realworld.10000.js";
+import WaypMarker from './WaypMarker';
 
 const pathIcon = new L.Icon({
   iconUrl: pathSvg,
@@ -178,6 +181,9 @@ class GraphMap extends React.Component {
       moveMapPaths: [], // A copy of paths used for alignment.
       rotLoc: L.latLng(43.782, -79.466),
       transLoc: L.latLng(43.782, -79.466),
+      //boat project specific: waypoint related
+      waypoints: [],
+      disabled: false, //disable all waypoint operations until server responds
     };
 
     // Get the underlying leaflet map.
@@ -189,6 +195,19 @@ class GraphMap extends React.Component {
         this.map.on("zoomend", this._onZoomEnd, this);
       }
     };
+
+    /*boat specific*/
+    //estimation map
+    this.mapEs = null;
+    this.setMapEs = (map) => {
+      this.mapEs = map.leafletElement;
+    }
+
+    //ground truth map
+    this.mapGr = null;
+    this.setMapGr = (map) => {
+      this.mapGr = map.leafletElement;
+    }
 
     if (props.mode === "vtr") {
       // Pose graph loading related.
@@ -225,6 +244,11 @@ class GraphMap extends React.Component {
       this.props.socket.on("robot/loc", this._loadRobotState.bind(this));
       this.props.socket.on("robot/path", this._loadCurrentPath.bind(this));
       this.props.socket.on("graph/update", this._loadGraphUpdate.bind(this));
+      
+    }
+    if (this.props.mode === 'boat'){
+      this.props.socket.on('status', this._updateWaypoint.bind(this));
+      
     }
   }
 
@@ -256,6 +280,9 @@ class GraphMap extends React.Component {
       this.props.socket.off("robot/loc", this._loadRobotState.bind(this));
       this.props.socket.off("robot/path", this._loadCurrentPath.bind(this));
       this.props.socket.off("graph/update", this._loadGraphUpdate.bind(this));
+    }
+    if (this.props.mode === 'boat'){
+      this.props.socket.off('status', this._updateWaypoint.bind(this));
     }
   }
 
@@ -294,249 +321,363 @@ class GraphMap extends React.Component {
     } = this.state;
 
     return (
-      <LeafletMap
-        ref = {mode === "vtr" ? this.setMap : ""}
-        bounds={[
-          [lowerBound.lat, lowerBound.lng],
-          [upperBound.lat, upperBound.lng],
-        ]}
-        center={mapCenter}
-        onClick={this._onMapClick.bind(this)}
-        zoomControl = {false}
-      >
-        <LayersControl>
-          <LayersControl.BaseLayer name="Base" checked>
-            {/* leaflet map tiles */}
-            <TileLayer
-              maxNativeZoom={20}
-              maxZoom={22}
-              noWrap
-              subdomains={mode === "vtr" ? "0123" : ['mt0', 'mt1', 'mt2', 'mt3'] }
-              // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"  // default
-              url={
-                mode === "vtr" ? "/cache/tile/{s}/{x}/{y}/{z}" : "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-              }
-              attribution= {
-                mode === "vtr" ? "" : 
-                  'Imagery @2021 TerraMetrics, Map data @2021 INEGI'
-              }
-            />
-         </LayersControl.BaseLayer>
-	{mode !== "vtr" && (
-            <LayersControl.Overlay name="Heatmap" checked>
-              <FeatureGroup color="purple">
-                <HeatmapLayer
-                  fitBoundsOnLoad
-                  fitBoundsOnUpdate
-                  points={addressPoints}
-                  longitudeExtractor={m => m[1]}
-                  latitudeExtractor={m => m[0]}
-                  intensityExtractor={m => parseFloat(m[2])}
+      <>
+        {mode === 'vtr' && (
+          <LeafletMap
+            ref={this.setMap}
+            bounds={[
+              [lowerBound.lat, lowerBound.lng],
+              [upperBound.lat, upperBound.lng],
+            ]}
+            center={mapCenter}
+            onClick={this._onMapClick.bind(this)}
+            zoomControl = {false}
+          >
+            <LayersControl>
+              <LayersControl.BaseLayer name="Map" checked>
+                {/* leaflet map tiles */}
+                <TileLayer
+                  maxNativeZoom={20}
+                  maxZoom={22}
+                  noWrap
+                  subdomains="0123"
+                  // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"  // default
+                  url="/cache/tile/{s}/{x}/{y}/{z}"
                 />
-              </FeatureGroup>
-            </LayersControl.Overlay>
-          )}
-        </LayersControl>
-        <ZoomControl position="bottomright" />
-
-        {/* VTR specific: posegraph, robot, etc */}
-        {mode === "vtr" && (
-          <>
-            {/* Main graph and robot */}
-            {graphReady && (
+              </LayersControl.BaseLayer>
+            </LayersControl>
+            <ZoomControl position="bottomright" />
+            {/* VTR specific: posegraph, robot, etc */}
+            {mode === "vtr" && (
               <>
-                {/* Current path (to repeat) */}
-                <Pane
-                  style={{
-                    zIndex: 500, // \todo Magic number.
-                  }}
-                >
-                  <Polyline
-                    color={"#f50057"}
-                    opacity={poseGraphOpacity}
-                    positions={this._extractVertices(
-                      currentPath,
-                      this.points
-                    ).map((v) => [v.lat, v.lng])}
-                    weight={5}
-                  />
-                </Pane>
-                {/* Current branch (during teach) */}
-                <Pane
-                  style={{
-                    zIndex: 500, // \todo Magic number.
-                  }}
-                >
-                  <Polyline
-                    color={"#f50057"}
-                    opacity={poseGraphOpacity}
-                    positions={this._extractVertices(branch, this.points).map(
-                      (v) => [v.lat, v.lng]
-                    )}
-                    weight={5}
-                  />
-                </Pane>
-                {/* Graph paths */}
-                {paths.map((path, idx) => {
-                  let vertices = this._extractVertices(path, this.points);
-                  let coords = vertices.map((v) => [v.lat, v.lng]);
-                  return (
-                    <Polyline
-                      key={shortid.generate()}
-                      color={"#ffc107"}
-                      opacity={poseGraphOpacity}
-                      positions={coords}
-                      weight={7}
-                    />
-                  );
-                })}
-                {/* Current path considered for merging */}
-                <Pane
-                  style={{
-                    zIndex: 500, // \todo Magic number.
-                  }}
-                >
-                  <Polyline
-                    color={"#bfff00"}
-                    opacity={poseGraphOpacity}
-                    positions={this._extractVertices(
-                      mergePath,
-                      this.points
-                    ).map((v) => [v.lat, v.lng])}
-                    weight={5}
-                  />
-                </Pane>
-                {/* Robot marker */}
-                {robotReady && (
-                  <RotatedMarker
-                    position={robotLocation}
-                    rotationAngle={robotOrientation}
-                    icon={icon({
-                      iconUrl: robotIcon,
-                      iconSize: [40, 40],
-                    })}
-                    opacity={0.85}
-                    zIndexOffset={1500}
-                  />
-                )}
-                {/* Target robot marker for merging*/}
-                {robotReady && targetVertex !== null && (
-                  <RotatedMarker
-                    position={targetLocation}
-                    rotationAngle={targetOrientation}
-                    icon={icon({
-                      iconUrl: targetIcon,
-                      iconSize: [40, 40],
-                    })}
-                    onClick={() => this._submitMerge()}
-                    opacity={0.85}
-                    zIndexOffset={1600}
-                  />
-                )}
-                {/* Selected vertices for a repeat goal being added */}
-                {addingGoalType === "Repeat" &&
-                  addingGoalPath.map((id, idx) => {
-                    if (!this.points.has(id)) return null;
-                    return (
-                      <Marker
-                        key={shortid.generate()}
-                        position={this.points.get(id)}
-                        icon={pathIcon}
-                        opacity={0.8}
-                      />
-                    );
-                  })}
-                {/* Selected vertices for a repeat goal being selected (already added) */}
-                {selectedGoalPath.map((id, idx) => {
-                  if (!this.points.has(id)) return null;
-                  return (
-                    <Marker
-                      key={shortid.generate()}
-                      position={this.points.get(id)}
-                      icon={pathIcon2}
-                      opacity={0.8}
-                    />
-                  );
-                })}
-                {/* polylines that displays the graph pins */}
-                {graphPins.map((pin) => {
-                  return (
+                {/* Main graph and robot */}
+                {graphReady && (
+                  <>
+                    {/* Current path (to repeat) */}
                     <Pane
-                      key={shortid.generate()}
                       style={{
                         zIndex: 500, // \todo Magic number.
                       }}
                     >
-                      {/* the pin on first vertex is undefined when the graph is empty (should be the only undefined case) */}
-                      {this.points.get(pin.id) !== undefined && (
-                        <>
-                          <Marker
-                            icon={pinGraphMarkerIcon}
-                            opacity={poseGraphOpacity}
-                            position={pin.latLng}
-                          />
-                          <Polyline
-                            color={"#bfff00"}
-                            opacity={poseGraphOpacity}
-                            positions={[this.points.get(pin.id), pin.latLng]}
-                            weight={5}
-                          />
-                        </>
-                      )}
-                    </Pane>
-                  );
-                })}
-                {/* markers that displays the current pin to be added to the graph */}
-                {pinGraph && (
-                  <>
-                    {graphPinVertex !== null && (
-                      <Marker
-                        position={this.points.get(graphPinVertex)}
-                        icon={pinGraphIcon}
+                      <Polyline
+                        color={"#f50057"}
                         opacity={poseGraphOpacity}
+                        positions={this._extractVertices(
+                          currentPath,
+                          this.points
+                        ).map((v) => [v.lat, v.lng])}
+                        weight={5}
+                      />
+                    </Pane>
+                    {/* Current branch (during teach) */}
+                    <Pane
+                      style={{
+                        zIndex: 500, // \todo Magic number.
+                      }}
+                    >
+                      <Polyline
+                        color={"#f50057"}
+                        opacity={poseGraphOpacity}
+                        positions={this._extractVertices(branch, this.points).map(
+                          (v) => [v.lat, v.lng]
+                        )}
+                        weight={5}
+                      />
+                    </Pane>
+                    {/* Graph paths */}
+                    {paths.map((path, idx) => {
+                      let vertices = this._extractVertices(path, this.points);
+                      let coords = vertices.map((v) => [v.lat, v.lng]);
+                      return (
+                        <Polyline
+                          key={shortid.generate()}
+                          color={"#ffc107"}
+                          opacity={poseGraphOpacity}
+                          positions={coords}
+                          weight={7}
+                        />
+                      );
+                    })}
+                    {/* Current path considered for merging */}
+                    <Pane
+                      style={{
+                        zIndex: 500, // \todo Magic number.
+                      }}
+                    >
+                      <Polyline
+                        color={"#bfff00"}
+                        opacity={poseGraphOpacity}
+                        positions={this._extractVertices(
+                          mergePath,
+                          this.points
+                        ).map((v) => [v.lat, v.lng])}
+                        weight={5}
+                      />
+                    </Pane>
+                    {/* Robot marker */}
+                    {robotReady && (
+                      <RotatedMarker
+                        position={robotLocation}
+                        rotationAngle={robotOrientation}
+                        icon={icon({
+                          iconUrl: robotIcon,
+                          iconSize: [40, 40],
+                        })}
+                        opacity={0.85}
+                        zIndexOffset={1500}
                       />
                     )}
-                    {graphPinLatLng !== null && (
-                      <Marker
-                        position={graphPinLatLng}
-                        icon={pinGraphMarkerIcon}
-                        opacity={poseGraphOpacity}
+                    {/* Target robot marker for merging*/}
+                    {robotReady && targetVertex !== null && (
+                      <RotatedMarker
+                        position={targetLocation}
+                        rotationAngle={targetOrientation}
+                        icon={icon({
+                          iconUrl: targetIcon,
+                          iconSize: [40, 40],
+                        })}
+                        onClick={() => this._submitMerge()}
+                        opacity={0.85}
+                        zIndexOffset={1600}
                       />
+                    )}
+                    {/* Selected vertices for a repeat goal being added */}
+                    {addingGoalType === "Repeat" &&
+                      addingGoalPath.map((id, idx) => {
+                        if (!this.points.has(id)) return null;
+                        return (
+                          <Marker
+                            key={shortid.generate()}
+                            position={this.points.get(id)}
+                            icon={pathIcon}
+                            opacity={0.8}
+                          />
+                        );
+                      })}
+                    {/* Selected vertices for a repeat goal being selected (already added) */}
+                    {selectedGoalPath.map((id, idx) => {
+                      if (!this.points.has(id)) return null;
+                      return (
+                        <Marker
+                          key={shortid.generate()}
+                          position={this.points.get(id)}
+                          icon={pathIcon2}
+                          opacity={0.8}
+                        />
+                      );
+                    })}
+                    {/* polylines that displays the graph pins */}
+                    {graphPins.map((pin) => {
+                      return (
+                        <Pane
+                          key={shortid.generate()}
+                          style={{
+                            zIndex: 500, // \todo Magic number.
+                          }}
+                        >
+                          {/* the pin on first vertex is undefined when the graph is empty (should be the only undefined case) */}
+                          {this.points.get(pin.id) !== undefined && (
+                            <>
+                              <Marker
+                                icon={pinGraphMarkerIcon}
+                                opacity={poseGraphOpacity}
+                                position={pin.latLng}
+                              />
+                              <Polyline
+                                color={"#bfff00"}
+                                opacity={poseGraphOpacity}
+                                positions={[this.points.get(pin.id), pin.latLng]}
+                                weight={5}
+                              />
+                            </>
+                          )}
+                        </Pane>
+                      );
+                    })}
+                    {/* markers that displays the current pin to be added to the graph */}
+                    {pinGraph && (
+                      <>
+                        {graphPinVertex !== null && (
+                          <Marker
+                            position={this.points.get(graphPinVertex)}
+                            icon={pinGraphIcon}
+                            opacity={poseGraphOpacity}
+                          />
+                        )}
+                        {graphPinLatLng !== null && (
+                          <Marker
+                            position={graphPinLatLng}
+                            icon={pinGraphMarkerIcon}
+                            opacity={poseGraphOpacity}
+                          />
+                        )}
+                      </>
                     )}
                   </>
                 )}
+                {/* A copy of the graph used for alignment */}
+                {moveMap && !zooming && (
+                  <Pane // Change the transform style of pane to re-position the graph.
+                    style={{
+                      position: "absolute",
+                      top: "0",
+                      left: "0",
+                      transformOrigin: this._getTransformOriginString(),
+                      transform: this._getTransformString(),
+                    }}
+                  >
+                    {/* Graph paths */}
+                    {moveMapPaths.map((path, idx) => {
+                      let vertices = this._extractVertices(path, this.points);
+                      let coords = vertices.map((v) => [v.lat, v.lng]);
+                      return (
+                        <Polyline
+                          color={"#ffc107"}
+                          opacity={poseGraphOpacity}
+                          key={shortid.generate()}
+                          positions={coords}
+                          weight={5}
+                        />
+                      );
+                    })}
+                  </Pane>
+                )}
               </>
             )}
-            {/* A copy of the graph used for alignment */}
-            {moveMap && !zooming && (
-              <Pane // Change the transform style of pane to re-position the graph.
-                style={{
-                  position: "absolute",
-                  top: "0",
-                  left: "0",
-                  transformOrigin: this._getTransformOriginString(),
-                  transform: this._getTransformString(),
-                }}
-              >
-                {/* Graph paths */}
-                {moveMapPaths.map((path, idx) => {
-                  let vertices = this._extractVertices(path, this.points);
-                  let coords = vertices.map((v) => [v.lat, v.lng]);
-                  return (
-                    <Polyline
-                      color={"#ffc107"}
-                      opacity={poseGraphOpacity}
-                      key={shortid.generate()}
-                      positions={coords}
-                      weight={5}
-                    />
-                  );
-                })}
-              </Pane>
-            )}
-          </>
+          </LeafletMap>
         )}
-      </LeafletMap>
+        {mode === 'boat' && (
+          <Box 
+            display={"flex"}
+            flexDirection={"row"}
+            justifyContent='space-around'
+          >
+            <Box
+              width='48%'
+              display='flex'
+              flexDirection='column'
+              alignItems='flex-start'
+            >
+              <h3 height='10%'>Estimation</h3>
+              <LeafletMap
+                className='leaflet-container-boat'
+                ref={this.setMapEs}
+                bounds={[
+                  [lowerBound.lat, lowerBound.lng],
+                  [upperBound.lat, upperBound.lng],
+                ]}
+                center={mapCenter}
+                zoomControl = {false}
+                doubleClickZoom={false}
+                touchZoom={true}
+                onzoomend={this._onZoomEndEs.bind(this)}
+                ondragend={this._onDragEndEs.bind(this)}
+                ondblclick={this._addWaypoint.bind(this)}
+              >
+                <LayersControl>
+                  <LayersControl.BaseLayer name="Map" checked>
+                    {/* leaflet map tiles */}
+                    <TileLayer
+                      maxNativeZoom={20}
+                      maxZoom={22}
+                      noWrap
+                      subdomains={['mt0', 'mt1', 'mt2', 'mt3'] }
+                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
+                      attribution='Imagery @2021 TerraMetrics, Map data @2021 INEGI'
+                    />
+                  </LayersControl.BaseLayer>
+                  <LayersControl.Overlay name="Mean" checked>
+                    <FeatureGroup color="purple">
+                      <HeatmapLayer
+                        fitBoundsOnLoad={false}
+                        fitBoundsOnUpdate={false}
+                        points={addressPoints}
+                        longitudeExtractor={m => m[1]}
+                        latitudeExtractor={m => m[0]}
+                        intensityExtractor={m => parseFloat(m[2])}
+                      />
+                    </FeatureGroup>
+                  </LayersControl.Overlay>
+                  <LayersControl.Overlay name="Variance" checked={false}>
+                    <FeatureGroup color="purple">
+                      <HeatmapLayer
+                        fitBoundsOnLoad={false}
+                        fitBoundsOnUpdate={false}
+                        points={addressPoints}
+                        longitudeExtractor={m => m[1]}
+                        latitudeExtractor={m => m[0]}
+                        intensityExtractor={m => parseFloat(m[2])}
+                      />
+                    </FeatureGroup>
+                  </LayersControl.Overlay>
+                </LayersControl>
+                <ZoomControl position="bottomright" />
+                {/* Waypoint Markers */}
+                <div>
+                  {this.state.waypoints.map((waypoint, id) => 
+                    <WaypMarker
+                      key={waypoint.key}
+                      position={waypoint.latlng}
+                      id={id+1}
+                      socket={this.props.socket}
+                    />
+                  )}
+                </div>
+              </LeafletMap>
+            </Box>
+            <Box 
+              width='48%'
+              display='flex'
+              flexDirection='column'
+              alignItems='flex-start'
+            >
+              <h3 height='10%'>Ground Truth</h3>
+              <LeafletMap
+                className='leaflet-container-boat'
+                ref={this.setMapGr}
+                bounds={[
+                  [lowerBound.lat, lowerBound.lng],
+                  [upperBound.lat, upperBound.lng],
+                ]}
+                center={mapCenter}
+                zoomControl = {false}
+                onzoomend={this._onZoomEndGr.bind(this)}
+                ondragend={this._onDragEndGr.bind(this)}
+                touchZoom={true}
+                doubleClickZoom={false}
+              >
+                <LayersControl>
+                  <LayersControl.BaseLayer name="Map" checked>
+                    {/* leaflet map tiles */}
+                    <TileLayer
+                      maxNativeZoom={20}
+                      maxZoom={22}
+                      noWrap
+                      subdomains={['mt0', 'mt1', 'mt2', 'mt3'] }
+                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
+                      attribution='Imagery @2021 TerraMetrics, Map data @2021 INEGI'
+                    />
+                  </LayersControl.BaseLayer>
+                  <LayersControl.Overlay name="Ground Truth" checked>
+                    <FeatureGroup color="purple">
+                      <HeatmapLayer
+                        fitBoundsOnLoad={false}
+                        fitBoundsOnUpdate={false}
+                        points={addressPoints}
+                        longitudeExtractor={m => m[1]}
+                        latitudeExtractor={m => m[0]}
+                        intensityExtractor={m => parseFloat(m[2])}
+                      />
+                    </FeatureGroup>
+                  </LayersControl.Overlay>
+                </LayersControl>
+                <ZoomControl position="bottomright" />
+              </LeafletMap>
+            </Box>
+          </Box>
+        )}
+      </>
+      
     );
   }
 
@@ -1511,6 +1652,98 @@ class GraphMap extends React.Component {
       ", " +
       transform.scale +
       ")");
+  }
+
+  /**
+   * @brief receive and update waypoint list from the ros nodes
+   */
+  _updateWaypoint(wayps){
+    this.setState(
+      {
+        waypoints: wayps.queue.map((wayp) => (
+                        {
+                          latlng: [wayp.latitude, wayp.longitude],
+                          key: wayp.id
+                        }
+                    ))
+                    
+      }
+    );
+  }
+  /**
+   * @brief requests the ros node to append a new waypoint at where user doubleclicked
+   */
+  _addWaypoint(e){
+    if(this.state.disabled){
+      alert(`Cannot add waypoint! Waiting for server to respond to previous operation...\nTry again later!`);
+    }
+    else if(!this.props.socketConnected){
+      alert(`Cannot add waypoint! Socket not connected.\nTry again later!`);
+    }
+    else{
+      let callback = (success, msg) => {
+        if(!success){
+          alert(`Failed to add a waypoint: ${msg}`);
+        }
+        else{
+          console.log('Waypoint successfully added!');
+        }
+        this.setState({disabled: false});
+      }
+
+      //disable all waypoint operations temporarily while the server processes the current request
+      this.setState({disabled: true});
+      this.setState((state, props) => {
+        props.socket.emit('goal/add', e.latlng, callback.bind(this));
+        console.log(`Requesting to add a waypoint at ${e.latlng}`);
+      });
+    }
+  }
+
+  
+ 
+  /**
+   * @brief sync the estimation and the ground truth map
+   */
+  _onZoomEndEs(){
+    if(this.mapGr){
+      if(this.mapEs.getZoom() != this.mapGr.getZoom()){
+        this.mapGr.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], this.mapEs.getZoom());
+      }
+    }
+  }
+
+  /**
+   * @brief sync the estimation and the ground truth map
+   */
+  _onZoomEndGr(e){
+    if(this.mapEs){
+      if(this.mapEs.getZoom() != this.mapGr.getZoom()){
+        this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
+      }
+    }
+  }
+
+  /**
+   * @brief sync the estimation and the ground truth map
+   */
+  _onDragEndEs(){
+    if(this.mapGr){
+      if(this.mapGr.getCenter() != this.mapEs.getCenter()){
+        this.mapGr.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], this.mapEs.getZoom());
+      }
+    }
+  }
+
+  /**
+   * @brief sync the estimation and the ground truth map
+   */
+   _onDragEndGr(){
+    if(this.mapEs){
+      if(this.mapGr.getCenter() != this.mapEs.getCenter()){
+        this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
+      }
+    }
   }
 }
 

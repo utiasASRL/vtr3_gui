@@ -19,6 +19,7 @@
     "leaflet-rotatedmarker": "^0.2.0",
     "protobufjs": "^6.10.1",
     "react": "^16.13.1",
+    "react-contextmenu": "^2.14.0",
     "react-dom": "^16.13.1",
     "react-leaflet": "^2.7.0",
     "react-leaflet-heatmap-layer": "^2.0.0",
