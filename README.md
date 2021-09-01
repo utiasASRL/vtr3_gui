@@ -201,9 +201,8 @@ Step 1: In one terminal,
 python3 web_server.py  # web server that hosts the web page and handle some requests from the frontend
 ```
 
-Then Step 2:
+Then Step 2 (for Vtr3 project ONLY):
 
-- For Vtr3 project ONLY:
 In another terminal,
 
 ```bash
