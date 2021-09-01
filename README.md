@@ -195,19 +195,22 @@ npm run build # "compile" javascripts
 
 ## Launch
 
-In one terminal,
+Step 1: In one terminal,
 
 ```bash
 python3 web_server.py  # web server that hosts the web page and handle some requests from the frontend
 ```
 
+Then Step 2:
+
+- For Vtr3 project ONLY:
 In another terminal,
 
 ```bash
 python3 socket_server.py  # socket io server that passes data between the frontend and other systems, mainly used to send updates from vtr to the frontend
 ```
 
-Open your brower and navigate to `http://localhost:5200`, and select "None" when choosing project.
+Step 3: Open your brower and navigate to `http://localhost:5200`.
 
 ## To Developers
 
