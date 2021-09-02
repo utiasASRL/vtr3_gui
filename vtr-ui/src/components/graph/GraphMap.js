@@ -17,6 +17,9 @@ import {
 } from "react-leaflet";
 import { kdTree } from "kd-tree-javascript";
 import Box from "@material-ui/core/Box";
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import {HighlightOff} from '@material-ui/icons';
 
 import RotatedMarker from "./RotatedMarker"; // react-leaflet does not have rotatable marker
 import robotIcon from "../../images/arrow.svg";
@@ -183,7 +186,9 @@ class GraphMap extends React.Component {
       transLoc: L.latLng(43.782, -79.466),
       //boat project specific: waypoint related
       waypoints: [],
-      disabled: false, //disable all waypoint operations until server responds
+      showMenu: false,
+      menuPos: [0, 0],
+      selectedMarkerID: 0
     };
 
     // Get the underlying leaflet map.
@@ -196,19 +201,21 @@ class GraphMap extends React.Component {
       }
     };
 
-    /*boat specific*/
-    //estimation map
-    this.mapEs = null;
-    this.setMapEs = (map) => {
-      this.mapEs = map.leafletElement;
-    }
+    if(props.mode === 'boat'){
+      //estimation map
+      this.mapEs = null;
+      this.setMapEs = (map) => {
+        this.mapEs = map.leafletElement;
+      }
 
-    //ground truth map
-    this.mapGr = null;
-    this.setMapGr = (map) => {
-      this.mapGr = map.leafletElement;
-    }
+      //ground truth map
+      this.mapGr = null;
+      this.setMapGr = (map) => {
+        this.mapGr = map.leafletElement;
+      }
 
+    }
+    
     if (props.mode === "vtr") {
       // Pose graph loading related.
       this.points = new Map(); // Mapping from VertexId to Vertex for path lookup.
@@ -224,6 +231,7 @@ class GraphMap extends React.Component {
         this._loadInitRobotState();
       }); // Note: the callback is not called until the second time rendering.
 
+    
       // Markers used to move graph.
       this.transMarker = null;
       this.scaleMarker = null;
@@ -235,6 +243,10 @@ class GraphMap extends React.Component {
       // Markers used for merging
       this.mergeMarker = { s: null, c: null, e: null };
       this.mergeVertex = { s: null, c: null, e: null };
+    }
+
+    if(props.mode === 'boat'){
+      this._loadInitWaypoints();
     }
   }
 
@@ -319,7 +331,7 @@ class GraphMap extends React.Component {
       targetOrientation,
       targetVertex,
     } = this.state;
-
+    
     return (
       <>
         {mode === 'vtr' && (
@@ -613,16 +625,36 @@ class GraphMap extends React.Component {
                 </LayersControl>
                 <ZoomControl position="bottomright" />
                 {/* Waypoint Markers */}
-                <div>
-                  {this.state.waypoints.map((waypoint, id) => 
+                {this.state.waypoints.map((waypoint, id) => (
                     <WaypMarker
                       key={waypoint.key}
                       position={waypoint.latlng}
                       id={id+1}
                       socket={this.props.socket}
+                      oncontext={this._onContextMenuMarker.bind(this)}
                     />
-                  )}
-                </div>
+                ))}
+                {/*Waypoint Menu*/}
+                <Menu
+                  keepMounted
+                  open={this.state.showMenu}
+                  onClose={() => {this.setState({showMenu: false})}}
+                  anchorReference='anchorPosition'
+                  anchorPosition={{top: this.state.menuPos[1], left: this.state.menuPos[0]}}
+                >
+                  <MenuItem onClick={this._deleteWayp.bind(this)}>
+                    <Box 
+                      display={"flex"}
+                      flexDirection={"row"}
+                      justifyContent='space-around'
+                    >
+                      <HighlightOff style={{color: 'red'}}/>
+                      <span>
+                        Delete
+                      </span>
+                    </Box>
+                  </MenuItem>
+                </Menu>
               </LeafletMap>
             </Box>
             <Box 
@@ -675,6 +707,7 @@ class GraphMap extends React.Component {
               </LeafletMap>
             </Box>
           </Box>
+          
         )}
       </>
       
@@ -1674,32 +1707,68 @@ class GraphMap extends React.Component {
    * @brief requests the ros node to append a new waypoint at where user doubleclicked
    */
   _addWaypoint(e){
-    if(this.state.disabled){
-      alert(`Cannot add waypoint! Waiting for server to respond to previous operation...\nTry again later!`);
-    }
-    else if(!this.props.socketConnected){
-      alert(`Cannot add waypoint! Socket not connected.\nTry again later!`);
-    }
-    else{
-      let callback = (success, msg) => {
-        if(!success){
-          alert(`Failed to add a waypoint: ${msg}`);
-        }
-        else{
-          console.log('Waypoint successfully added!');
-        }
-        this.setState({disabled: false});
+    
+    let callback = (success, msg) => {
+      if(!success){
+        alert(`Failed to add a waypoint: ${msg}`);
       }
+      else{
+        console.log('Waypoint successfully added!');
+      }
+    }
 
-      //disable all waypoint operations temporarily while the server processes the current request
-      this.setState({disabled: true});
-      this.setState((state, props) => {
+    this.setState((state, props) => {
+      if(props.socketConnected){
         props.socket.emit('goal/add', e.latlng, callback.bind(this));
         console.log(`Requesting to add a waypoint at ${e.latlng}`);
-      });
-    }
+      }
+      else{
+        alert(`Cannot add waypoint! Socket not connected.\nTry again later!`);
+      }
+    });
+  
   }
 
+    /**
+   * @brief load the initial waypoints
+   * Make a request for the waypoint list
+   */
+  _loadInitWaypoints(){
+    console.log('Loading intial waypoints...');
+
+    //if fetched successfully, return success + actual goal list
+    //if not successful, return success + msg
+    let cb = (success, wayps) => {
+      if(success){
+        this.setState(
+          {
+            waypoints: wayps.queue.map((wayp) => (
+                            {
+                              latlng: [wayp.latitude, wayp.longitude],
+                              key: wayp.id
+                            }
+                        ))
+                        
+          }
+        );
+        console.log('Initial waypoints successfully loaded');
+      }
+      else{
+        alert(`Loading initial waypoints failed: ${wayps}`);
+      }
+    }
+
+    this.setState((state, props) => {
+      if(props.socketConnected){
+        props.socket.emit('goal/all', cb.bind(this));
+      }
+      else{
+        alert(`Cannot load initial waypoints! Socket not connected.\nTry again later!`);
+      }
+    })
+    
+    
+  }
   
  
   /**
@@ -1716,12 +1785,14 @@ class GraphMap extends React.Component {
   /**
    * @brief sync the estimation and the ground truth map
    */
-  _onZoomEndGr(e){
+  _onZoomEndGr(){
     if(this.mapEs){
       if(this.mapEs.getZoom() != this.mapGr.getZoom()){
         this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
       }
     }
+    
+    
   }
 
   /**
@@ -1744,6 +1815,44 @@ class GraphMap extends React.Component {
         this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
       }
     }
+  }
+  /**
+   * @brief opens the waypoint context menu
+   */
+  _onContextMenuMarker(e){
+    //opens the menu
+    //updates the position of the menu
+    this.setState({
+      showMenu: true,
+      menuPos: [e.originalEvent.clientX, e.originalEvent.clientY],
+      selectedMarkerID: e.target.options.id - 1
+    });
+
+  }
+
+  _deleteWayp(){
+    
+    //send a request to delete this waypoint
+
+    let callback = (success, msg) => {
+      if(!success){
+        alert(`Failed to delete the waypoint: ${msg}`);
+      }
+      else{
+        console.log('Waypoint successfully deleted!');
+      }
+    }
+
+    this.setState((state, props) => {
+      if(props.socketConnected){
+        console.log(`Requesting to delete the waypoint #${state.selectedMarkerID}...`);
+        props.socket.emit('goal/remove', {id: state.selectedMarkerID}, callback);
+      }
+      else{
+        alert(`Cannot delete waypoint. Socket not yet connected!\nTry again later`)
+      }
+      return {showMenu: false};
+    });
   }
 }
 
