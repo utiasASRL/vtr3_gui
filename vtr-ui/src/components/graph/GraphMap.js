@@ -1834,9 +1834,9 @@ class GraphMap extends React.Component {
     
     //send a request to delete this waypoint
 
-    let callback = (success, msg) => {
+    let callback = (success) => {
       if(!success){
-        alert(`Failed to delete the waypoint: ${msg}`);
+        alert(`Failed to delete the waypoint`);
       }
       else{
         console.log('Waypoint successfully deleted!');
@@ -1846,7 +1846,7 @@ class GraphMap extends React.Component {
     this.setState((state, props) => {
       if(props.socketConnected){
         console.log(`Requesting to delete the waypoint #${state.selectedMarkerID}...`);
-        props.socket.emit('goal/remove', {id: state.selectedMarkerID}, callback);
+        props.socket.emit('goal/cancel', {id: state.selectedMarkerID}, callback);
       }
       else{
         alert(`Cannot delete waypoint. Socket not yet connected!\nTry again later`)
