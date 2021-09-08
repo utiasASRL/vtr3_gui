@@ -136,7 +136,8 @@ class GoalCurrent extends React.Component {
                   Merge
                 </Button>
               )}
-              {goal.target === "Repeat" && (
+              {/* Disabled until path-tracker overhaul done - vtr3 issue 108*/}
+              {/* {goal.target === "Repeat" && (
                 <Button
                   color={toolsState.relocalize ? "secondary" : "primary"}
                   disableElevation={true}
@@ -148,7 +149,7 @@ class GoalCurrent extends React.Component {
                 >
                   Relocalize
                 </Button>
-              )}
+              )} */}
             </Box>
             <Box width={100} ml="auto" mr={2}>
               {(toolsState.merge || toolsState.relocalize) && (
