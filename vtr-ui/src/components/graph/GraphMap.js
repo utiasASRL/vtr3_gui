@@ -1,5 +1,5 @@
 import "leaflet/dist/leaflet.css";
-import '../../index.css';
+import "../../index.css";
 import shortid from "shortid";
 import protobuf from "protobufjs";
 import React from "react";
@@ -17,9 +17,9 @@ import {
 } from "react-leaflet";
 import { kdTree } from "kd-tree-javascript";
 import Box from "@material-ui/core/Box";
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import {HighlightOff} from '@material-ui/icons';
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import { HighlightOff } from "@material-ui/icons";
 
 import RotatedMarker from "./RotatedMarker"; // react-leaflet does not have rotatable marker
 import robotIcon from "../../images/arrow.svg";
@@ -37,7 +37,7 @@ import pinGraphMarkerSvg from "../../images/pin-graph-marker.svg";
 
 import HeatmapLayer from "../../../node_modules/react-leaflet-heatmap-layer/src/HeatmapLayer";
 import { addressPoints } from "../../../node_modules/react-leaflet-heatmap-layer/example/realworld.10000.js";
-import WaypMarker from './WaypMarker';
+import WaypMarker from "./WaypMarker";
 
 const pathIcon = new L.Icon({
   iconUrl: pathSvg,
@@ -188,7 +188,7 @@ class GraphMap extends React.Component {
       waypoints: [],
       showMenu: false,
       menuPos: [0, 0],
-      selectedMarkerID: 0
+      selectedMarkerID: 0,
     };
 
     // Get the underlying leaflet map.
@@ -201,21 +201,20 @@ class GraphMap extends React.Component {
       }
     };
 
-    if(props.mode === 'boat'){
+    if (props.mode === "boat") {
       //estimation map
       this.mapEs = null;
       this.setMapEs = (map) => {
         this.mapEs = map.leafletElement;
-      }
+      };
 
       //ground truth map
       this.mapGr = null;
       this.setMapGr = (map) => {
         this.mapGr = map.leafletElement;
-      }
-
+      };
     }
-    
+
     if (props.mode === "vtr") {
       // Pose graph loading related.
       this.points = new Map(); // Mapping from VertexId to Vertex for path lookup.
@@ -231,7 +230,6 @@ class GraphMap extends React.Component {
         this._loadInitRobotState();
       }); // Note: the callback is not called until the second time rendering.
 
-    
       // Markers used to move graph.
       this.transMarker = null;
       this.scaleMarker = null;
@@ -245,9 +243,15 @@ class GraphMap extends React.Component {
       this.mergeVertex = { s: null, c: null, e: null };
     }
 
-    if(props.mode === 'boat'){
+    if (props.mode === "boat") {
       this._loadInitWaypoints();
     }
+  }
+
+  focus() {
+    var location = [39.1705, 117.1962];
+    this.mapEs.panTo(location);
+    this.mapGr.panTo(location);
   }
 
   componentDidMount() {
@@ -256,11 +260,9 @@ class GraphMap extends React.Component {
       this.props.socket.on("robot/loc", this._loadRobotState.bind(this));
       this.props.socket.on("robot/path", this._loadCurrentPath.bind(this));
       this.props.socket.on("graph/update", this._loadGraphUpdate.bind(this));
-      
     }
-    if (this.props.mode === 'boat'){
-      this.props.socket.on('status', this._updateWaypoint.bind(this));
-      
+    if (this.props.mode === "boat") {
+      this.props.socket.on("status", this._updateWaypoint.bind(this));
     }
   }
 
@@ -293,8 +295,8 @@ class GraphMap extends React.Component {
       this.props.socket.off("robot/path", this._loadCurrentPath.bind(this));
       this.props.socket.off("graph/update", this._loadGraphUpdate.bind(this));
     }
-    if (this.props.mode === 'boat'){
-      this.props.socket.off('status', this._updateWaypoint.bind(this));
+    if (this.props.mode === "boat") {
+      this.props.socket.off("status", this._updateWaypoint.bind(this));
     }
   }
 
@@ -331,10 +333,10 @@ class GraphMap extends React.Component {
       targetOrientation,
       targetVertex,
     } = this.state;
-    
+
     return (
       <>
-        {mode === 'vtr' && (
+        {mode === "vtr" && (
           <LeafletMap
             ref={this.setMap}
             bounds={[
@@ -343,7 +345,7 @@ class GraphMap extends React.Component {
             ]}
             center={mapCenter}
             onClick={this._onMapClick.bind(this)}
-            zoomControl = {false}
+            zoomControl={false}
           >
             <LayersControl>
               <LayersControl.BaseLayer name="Map" checked>
@@ -390,9 +392,10 @@ class GraphMap extends React.Component {
                       <Polyline
                         color={"#f50057"}
                         opacity={poseGraphOpacity}
-                        positions={this._extractVertices(branch, this.points).map(
-                          (v) => [v.lat, v.lng]
-                        )}
+                        positions={this._extractVertices(
+                          branch,
+                          this.points
+                        ).map((v) => [v.lat, v.lng])}
                         weight={5}
                       />
                     </Pane>
@@ -498,7 +501,10 @@ class GraphMap extends React.Component {
                               <Polyline
                                 color={"#bfff00"}
                                 opacity={poseGraphOpacity}
-                                positions={[this.points.get(pin.id), pin.latLng]}
+                                positions={[
+                                  this.points.get(pin.id),
+                                  pin.latLng,
+                                ]}
                                 weight={5}
                               />
                             </>
@@ -558,28 +564,28 @@ class GraphMap extends React.Component {
             )}
           </LeafletMap>
         )}
-        {mode === 'boat' && (
-          <Box 
+        {mode === "boat" && (
+          <Box
             display={"flex"}
             flexDirection={"row"}
-            justifyContent='space-around'
+            justifyContent="space-around"
           >
             <Box
-              width='48%'
-              display='flex'
-              flexDirection='column'
-              alignItems='flex-start'
+              width="48%"
+              display="flex"
+              flexDirection="column"
+              alignItems="flex-start"
             >
-              <h3 height='10%'>Estimation</h3>
+              <h3 height="10%">Estimation</h3>
               <LeafletMap
-                className='leaflet-container-boat'
+                className="leaflet-container-boat"
                 ref={this.setMapEs}
                 bounds={[
                   [lowerBound.lat, lowerBound.lng],
                   [upperBound.lat, upperBound.lng],
                 ]}
                 center={mapCenter}
-                zoomControl = {false}
+                zoomControl={false}
                 doubleClickZoom={false}
                 touchZoom={true}
                 onzoomend={this._onZoomEndEs.bind(this)}
@@ -593,9 +599,9 @@ class GraphMap extends React.Component {
                       maxNativeZoom={20}
                       maxZoom={22}
                       noWrap
-                      subdomains={['mt0', 'mt1', 'mt2', 'mt3'] }
+                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
                       url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution='Imagery @2021 TerraMetrics, Map data @2021 INEGI'
+                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -604,9 +610,9 @@ class GraphMap extends React.Component {
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
                         points={addressPoints}
-                        longitudeExtractor={m => m[1]}
-                        latitudeExtractor={m => m[0]}
-                        intensityExtractor={m => parseFloat(m[2])}
+                        longitudeExtractor={(m) => m[1]}
+                        latitudeExtractor={(m) => m[0]}
+                        intensityExtractor={(m) => parseFloat(m[2])}
                       />
                     </FeatureGroup>
                   </LayersControl.Overlay>
@@ -616,9 +622,9 @@ class GraphMap extends React.Component {
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
                         points={addressPoints}
-                        longitudeExtractor={m => m[1]}
-                        latitudeExtractor={m => m[0]}
-                        intensityExtractor={m => parseFloat(m[2])}
+                        longitudeExtractor={(m) => m[1]}
+                        latitudeExtractor={(m) => m[0]}
+                        intensityExtractor={(m) => parseFloat(m[2])}
                       />
                     </FeatureGroup>
                   </LayersControl.Overlay>
@@ -626,53 +632,56 @@ class GraphMap extends React.Component {
                 <ZoomControl position="bottomright" />
                 {/* Waypoint Markers */}
                 {this.state.waypoints.map((waypoint, id) => (
-                    <WaypMarker
-                      key={waypoint.key}
-                      position={waypoint.latlng}
-                      id={id+1}
-                      socket={this.props.socket}
-                      oncontext={this._onContextMenuMarker.bind(this)}
-                    />
+                  <WaypMarker
+                    key={waypoint.key}
+                    position={waypoint.latlng}
+                    id={id + 1}
+                    socket={this.props.socket}
+                    oncontext={this._onContextMenuMarker.bind(this)}
+                  />
                 ))}
                 {/*Waypoint Menu*/}
                 <Menu
                   keepMounted
                   open={this.state.showMenu}
-                  onClose={() => {this.setState({showMenu: false})}}
-                  anchorReference='anchorPosition'
-                  anchorPosition={{top: this.state.menuPos[1], left: this.state.menuPos[0]}}
+                  onClose={() => {
+                    this.setState({ showMenu: false });
+                  }}
+                  anchorReference="anchorPosition"
+                  anchorPosition={{
+                    top: this.state.menuPos[1],
+                    left: this.state.menuPos[0],
+                  }}
                 >
                   <MenuItem onClick={this._deleteWayp.bind(this)}>
-                    <Box 
+                    <Box
                       display={"flex"}
                       flexDirection={"row"}
-                      justifyContent='space-around'
+                      justifyContent="space-around"
                     >
-                      <HighlightOff style={{color: 'red'}}/>
-                      <span>
-                        Delete
-                      </span>
+                      <HighlightOff style={{ color: "red" }} />
+                      <span>Delete</span>
                     </Box>
                   </MenuItem>
                 </Menu>
               </LeafletMap>
             </Box>
-            <Box 
-              width='48%'
-              display='flex'
-              flexDirection='column'
-              alignItems='flex-start'
+            <Box
+              width="48%"
+              display="flex"
+              flexDirection="column"
+              alignItems="flex-start"
             >
-              <h3 height='10%'>Ground Truth</h3>
+              <h3 height="10%">Ground Truth</h3>
               <LeafletMap
-                className='leaflet-container-boat'
+                className="leaflet-container-boat"
                 ref={this.setMapGr}
                 bounds={[
                   [lowerBound.lat, lowerBound.lng],
                   [upperBound.lat, upperBound.lng],
                 ]}
                 center={mapCenter}
-                zoomControl = {false}
+                zoomControl={false}
                 onzoomend={this._onZoomEndGr.bind(this)}
                 ondragend={this._onDragEndGr.bind(this)}
                 touchZoom={true}
@@ -685,9 +694,9 @@ class GraphMap extends React.Component {
                       maxNativeZoom={20}
                       maxZoom={22}
                       noWrap
-                      subdomains={['mt0', 'mt1', 'mt2', 'mt3'] }
+                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
                       url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution='Imagery @2021 TerraMetrics, Map data @2021 INEGI'
+                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Ground Truth" checked>
@@ -696,9 +705,9 @@ class GraphMap extends React.Component {
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
                         points={addressPoints}
-                        longitudeExtractor={m => m[1]}
-                        latitudeExtractor={m => m[0]}
-                        intensityExtractor={m => parseFloat(m[2])}
+                        longitudeExtractor={(m) => m[1]}
+                        latitudeExtractor={(m) => m[0]}
+                        intensityExtractor={(m) => parseFloat(m[2])}
                       />
                     </FeatureGroup>
                   </LayersControl.Overlay>
@@ -707,10 +716,16 @@ class GraphMap extends React.Component {
               </LeafletMap>
             </Box>
           </Box>
-          
+        )}
+        {mode === "boat" && (
+          <button
+            onClick={this.focus.bind(this)}
+            style={{ position: "absolute", left: "50%" }}
+          >
+            locate boat
+          </button>
         )}
       </>
-      
     );
   }
 
@@ -1690,94 +1705,82 @@ class GraphMap extends React.Component {
   /**
    * @brief receive and update waypoint list from the ros nodes
    */
-  _updateWaypoint(wayps){
-    this.setState(
-      {
-        waypoints: wayps.queue.map((wayp) => (
-                        {
-                          latlng: [wayp.latitude, wayp.longitude],
-                          key: wayp.id
-                        }
-                    ))
-                    
-      }
-    );
+  _updateWaypoint(wayps) {
+    this.setState({
+      waypoints: wayps.queue.map((wayp) => ({
+        latlng: [wayp.latitude, wayp.longitude],
+        key: wayp.id,
+      })),
+    });
   }
   /**
    * @brief requests the ros node to append a new waypoint at where user doubleclicked
    */
-  _addWaypoint(e){
-    
+  _addWaypoint(e) {
     let callback = (success, msg) => {
-      if(!success){
+      if (!success) {
         alert(`Failed to add a waypoint: ${msg}`);
+      } else {
+        L.marker(e.latlng, { icon: pathIcon }).addTo(this.mapEs);
+        console.log("Waypoint successfully added!");
       }
-      else{
-        console.log('Waypoint successfully added!');
-      }
-    }
+    };
 
     this.setState((state, props) => {
-      if(props.socketConnected){
-        props.socket.emit('goal/add', e.latlng, callback.bind(this));
+      console.log(props);
+      if (props.socketConnected) {
+        props.socket.emit("goal/add", e.latlng, callback.bind(this));
         console.log(`Requesting to add a waypoint at ${e.latlng}`);
-      }
-      else{
+      } else {
         alert(`Cannot add waypoint! Socket not connected.\nTry again later!`);
       }
     });
-  
   }
 
-    /**
+  /**
    * @brief load the initial waypoints
    * Make a request for the waypoint list
    */
-  _loadInitWaypoints(){
-    console.log('Loading intial waypoints...');
+  _loadInitWaypoints() {
+    console.log("Loading intial waypoints...");
 
     //if fetched successfully, return success + actual goal list
     //if not successful, return success + msg
     let cb = (success, wayps) => {
-      if(success){
-        this.setState(
-          {
-            waypoints: wayps.queue.map((wayp) => (
-                            {
-                              latlng: [wayp.latitude, wayp.longitude],
-                              key: wayp.id
-                            }
-                        ))
-                        
-          }
-        );
-        console.log('Initial waypoints successfully loaded');
-      }
-      else{
+      if (success) {
+        this.setState({
+          waypoints: wayps.queue.map((wayp) => ({
+            latlng: [wayp.latitude, wayp.longitude],
+            key: wayp.id,
+          })),
+        });
+        console.log("Initial waypoints successfully loaded");
+      } else {
         alert(`Loading initial waypoints failed: ${wayps}`);
       }
-    }
+    };
 
     this.setState((state, props) => {
-      if(props.socketConnected){
-        props.socket.emit('goal/all', cb.bind(this));
+      if (props.socketConnected) {
+        props.socket.emit("goal/all", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load initial waypoints! Socket not connected.\nTry again later!`
+        );
       }
-      else{
-        alert(`Cannot load initial waypoints! Socket not connected.\nTry again later!`);
-      }
-    })
-    
-    
+    });
   }
-  
- 
+
   /**
    * @brief sync the estimation and the ground truth map
    */
-  _onZoomEndEs(){
-    if(this.mapGr){
-      if(this.mapEs.getZoom() != this.mapGr.getZoom()){
-        this.mapGr.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], this.mapEs.getZoom());
+  _onZoomEndEs() {
+    if (this.mapGr) {
+      if (this.mapEs.getZoom() != this.mapGr.getZoom()) {
+        this.mapGr.setView(
+          [this.mapEs.getCenter().lat, this.mapEs.getCenter().lng],
+          this.mapEs.getZoom()
+        );
       }
     }
   }
@@ -1785,23 +1788,13 @@ class GraphMap extends React.Component {
   /**
    * @brief sync the estimation and the ground truth map
    */
-  _onZoomEndGr(){
-    if(this.mapEs){
-      if(this.mapEs.getZoom() != this.mapGr.getZoom()){
-        this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
-      }
-    }
-    
-    
-  }
-
-  /**
-   * @brief sync the estimation and the ground truth map
-   */
-  _onDragEndEs(){
-    if(this.mapGr){
-      if(this.mapGr.getCenter() != this.mapEs.getCenter()){
-        this.mapGr.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], this.mapEs.getZoom());
+  _onZoomEndGr() {
+    if (this.mapEs) {
+      if (this.mapEs.getZoom() != this.mapGr.getZoom()) {
+        this.mapEs.setView(
+          [this.mapGr.getCenter().lat, this.mapGr.getCenter().lng],
+          this.mapGr.getZoom()
+        );
       }
     }
   }
@@ -1809,49 +1802,70 @@ class GraphMap extends React.Component {
   /**
    * @brief sync the estimation and the ground truth map
    */
-   _onDragEndGr(){
-    if(this.mapEs){
-      if(this.mapGr.getCenter() != this.mapEs.getCenter()){
-        this.mapEs.setView([this.mapGr.getCenter().lat, this.mapGr.getCenter().lng], this.mapGr.getZoom());
+  _onDragEndEs() {
+    if (this.mapGr) {
+      if (this.mapGr.getCenter() != this.mapEs.getCenter()) {
+        this.mapGr.setView(
+          [this.mapEs.getCenter().lat, this.mapEs.getCenter().lng],
+          this.mapEs.getZoom()
+        );
+      }
+    }
+  }
+
+  /**
+   * @brief sync the estimation and the ground truth map
+   */
+  _onDragEndGr() {
+    if (this.mapEs) {
+      if (this.mapGr.getCenter() != this.mapEs.getCenter()) {
+        this.mapEs.setView(
+          [this.mapGr.getCenter().lat, this.mapGr.getCenter().lng],
+          this.mapGr.getZoom()
+        );
       }
     }
   }
   /**
    * @brief opens the waypoint context menu
    */
-  _onContextMenuMarker(e){
+  _onContextMenuMarker(e) {
     //opens the menu
     //updates the position of the menu
     this.setState({
       showMenu: true,
       menuPos: [e.originalEvent.clientX, e.originalEvent.clientY],
-      selectedMarkerID: e.target.options.id - 1
+      selectedMarkerID: e.target.options.id - 1,
     });
-
   }
 
-  _deleteWayp(){
-    
+  _deleteWayp() {
     //send a request to delete this waypoint
 
     let callback = (success) => {
-      if(!success){
+      if (!success) {
         alert(`Failed to delete the waypoint`);
+      } else {
+        console.log("Waypoint successfully deleted!");
       }
-      else{
-        console.log('Waypoint successfully deleted!');
-      }
-    }
+    };
 
     this.setState((state, props) => {
-      if(props.socketConnected){
-        console.log(`Requesting to delete the waypoint #${state.selectedMarkerID}...`);
-        props.socket.emit('goal/cancel', {id: state.selectedMarkerID}, callback);
+      if (props.socketConnected) {
+        console.log(
+          `Requesting to delete the waypoint #${state.selectedMarkerID}...`
+        );
+        props.socket.emit(
+          "goal/cancel",
+          { id: state.selectedMarkerID },
+          callback
+        );
+      } else {
+        alert(
+          `Cannot delete waypoint. Socket not yet connected!\nTry again later`
+        );
       }
-      else{
-        alert(`Cannot delete waypoint. Socket not yet connected!\nTry again later`)
-      }
-      return {showMenu: false};
+      return { showMenu: false };
     });
   }
 }
