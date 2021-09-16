@@ -215,7 +215,6 @@ class GraphMap extends React.Component {
         this.mapGr = map.leafletElement;
       };
     }
-
     if (props.mode === "vtr") {
       // Pose graph loading related.
       this.points = new Map(); // Mapping from VertexId to Vertex for path lookup.
@@ -243,11 +242,6 @@ class GraphMap extends React.Component {
       this.mergeMarker = { s: null, c: null, e: null };
       this.mergeVertex = { s: null, c: null, e: null };
     }
-
-    if (props.mode === "boat") {
-      this._loadInitWaypoints();
-      this._loadInitRobotLoc();
-    }
   }
 
   focus() {
@@ -267,6 +261,8 @@ class GraphMap extends React.Component {
     if (this.props.mode === 'boat'){
       this.props.socket.on('status', this._updateWaypoint.bind(this));
       this.props.socket.on('robot/loc', this._updateRobotLocation.bind(this));
+      this._loadInitWaypoints();
+      this._loadInitRobotLoc();
     }
   }
 
@@ -1742,13 +1738,11 @@ class GraphMap extends React.Component {
       if (!success) {
         alert(`Failed to add a waypoint: ${msg}`);
       } else {
-        L.marker(e.latlng, { icon: pathIcon }).addTo(this.mapEs);
         console.log("Waypoint successfully added!");
       }
     };
 
     this.setState((state, props) => {
-      console.log(props);
       if (props.socketConnected) {
         props.socket.emit("goal/add", e.latlng, callback.bind(this));
         console.log(`Requesting to add a waypoint at ${e.latlng}`);
@@ -1763,18 +1757,18 @@ class GraphMap extends React.Component {
    * Make a request for the waypoint list
    */
   _loadInitWaypoints() {
-    console.log("Loading intial waypoints...");
-
     //if fetched successfully, return success + actual goal list
     //if not successful, return success + msg
     let cb = (success, wayps) => {
       if (success) {
-        this.setState({
-          waypoints: wayps.queue.map((wayp) => ({
-            latlng: [wayp.latitude, wayp.longitude],
-            key: wayp.id,
-          })),
-        });
+        this.setState(
+          {
+            waypoints: wayps.queue.map((wayp) => ({
+              latlng: [wayp.latitude, wayp.longitude],
+              key: wayp.id,
+            })),
+          }
+        );
         console.log("Initial waypoints successfully loaded");
       } else {
         alert(`Loading initial waypoints failed: ${wayps}`);
@@ -1782,6 +1776,7 @@ class GraphMap extends React.Component {
     };
 
     this.setState((state, props) => {
+      console.log("Loading intial waypoints...");
 
       if(props.socketConnected){
         props.socket.emit('goal/init', cb.bind(this));
@@ -1856,7 +1851,7 @@ class GraphMap extends React.Component {
     this.setState({
       showMenu: true,
       menuPos: [e.originalEvent.clientX, e.originalEvent.clientY],
-      selectedMarkerID: e.target.options.id - 1,
+      selectedMarkerID: e.target.options.key,
     });
   }
 
@@ -1875,7 +1870,7 @@ class GraphMap extends React.Component {
     this.setState((state, props) => {
       if (props.socketConnected) {
         console.log(
-          `Requesting to delete the waypoint #${state.selectedMarkerID}...`
+          `Requesting to delete waypoint`
         );
         props.socket.emit(
           "goal/cancel",
@@ -1904,8 +1899,6 @@ class GraphMap extends React.Component {
    * @brief fetch the initial robot location
    */
   _loadInitRobotLoc(){
-    console.log('Loading intial robot location...');
-
     //if fetched successfully, return success + actual location
     //if not successful, return success + msg
     let cb = (success, robotLoc) => {
@@ -1920,16 +1913,17 @@ class GraphMap extends React.Component {
       else{
         alert(`Loading initial robot location failed: ${robotLoc}`);
       }
-    }
+    };
 
     this.setState((state, props) => {
+      console.log('Loading intial robot location...');
       if(props.socketConnected){
         props.socket.emit('initRobotLoc', cb.bind(this));
       }
       else{
         alert(`Cannot load initial robot location! Socket not connected.\nTry again later!`);
       }
-    })
+    });
     
     
   }
