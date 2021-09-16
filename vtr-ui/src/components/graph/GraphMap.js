@@ -244,10 +244,43 @@ class GraphMap extends React.Component {
     }
   }
 
+  go () {
+    let cb = (success, robotLoc) => {
+      if(success){
+        console.log('Launching boat navigation');
+      }
+      else{
+        alert('Launching boat navigation failed');
+      }
+    };
+
+    if(this.props.socketConnected){
+      this.props.socket.emit('go', cb.bind(this));
+    } else {
+      alert(`Cannot launch boat navigation! Socket not connected.\nTry again later!`);
+    }
+  }
+
   focus() {
-    var location = [39.1705, 117.1962];
-    this.mapEs.panTo(location);
-    this.mapGr.panTo(location);
+    let cb = (success, robotLoc) => {
+      if(success){
+        this.mapEs.panTo([robotLoc.latitude, robotLoc.longitude]);
+        this.mapGr.panTo([robotLoc.latitude, robotLoc.longitude]);
+        console.log(`Panning to robot location: ${[robotLoc.latitude, robotLoc.longitude]}`);
+      }
+      else{
+        alert(`Panning to robot location failed: ${robotLoc}`);
+      }
+    };
+
+    if(this.props.socketConnected){
+      this.props.socket.emit('initRobotLoc', cb.bind(this));
+    } else {
+        alert(`Cannot pan to boat! Socket not connected.\nTry again later!`);
+      }
+    // var location = [39.1705, 117.1962];
+    // this.mapEs.panTo(location);
+    // this.mapGr.panTo(location);
   }
 
   componentDidMount() {
@@ -740,6 +773,14 @@ class GraphMap extends React.Component {
             style={{ position: "absolute", left: "50%" }}
           >
             locate boat
+          </button>
+        )}
+        {mode === "boat" && (
+          <button
+            onClick={this.go.bind(this)}
+            style={{ position: "absolute", left: "50%" }}
+          >
+            Go
           </button>
         )}
       </>
