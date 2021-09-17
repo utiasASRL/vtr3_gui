@@ -21,6 +21,8 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import { HighlightOff } from "@material-ui/icons";
 
+import Button from "@material-ui/core/Button";
+
 import RotatedMarker from "./RotatedMarker"; // react-leaflet does not have rotatable marker
 import robotIcon from "../../images/arrow.svg";
 import targetIcon from "../../images/arrow-merge.svg";
@@ -189,7 +191,7 @@ class GraphMap extends React.Component {
       showMenu: false,
       menuPos: [0, 0],
       selectedMarkerID: 0,
-      robotloc: null
+      robotloc: null,
     };
 
     // Get the underlying leaflet map.
@@ -244,40 +246,45 @@ class GraphMap extends React.Component {
     }
   }
 
-  go () {
+  go() {
     let cb = (success, robotLoc) => {
-      if(success){
-        console.log('Launching boat navigation');
-      }
-      else{
-        alert('Launching boat navigation failed');
+      if (success) {
+        console.log("Launching boat navigation");
+      } else {
+        alert("Launching boat navigation failed");
       }
     };
 
-    if(this.props.socketConnected){
-      this.props.socket.emit('go', cb.bind(this));
+    if (this.props.socketConnected) {
+      this.props.socket.emit("go", cb.bind(this));
     } else {
-      alert(`Cannot launch boat navigation! Socket not connected.\nTry again later!`);
+      alert(
+        `Cannot launch boat navigation! Socket not connected.\nTry again later!`
+      );
     }
   }
 
   focus() {
     let cb = (success, robotLoc) => {
-      if(success){
+      if (success) {
         this.mapEs.panTo([robotLoc.latitude, robotLoc.longitude]);
         this.mapGr.panTo([robotLoc.latitude, robotLoc.longitude]);
-        console.log(`Panning to robot location: ${[robotLoc.latitude, robotLoc.longitude]}`);
-      }
-      else{
+        console.log(
+          `Panning to robot location: ${[
+            robotLoc.latitude,
+            robotLoc.longitude,
+          ]}`
+        );
+      } else {
         alert(`Panning to robot location failed: ${robotLoc}`);
       }
     };
 
-    if(this.props.socketConnected){
-      this.props.socket.emit('initRobotLoc', cb.bind(this));
+    if (this.props.socketConnected) {
+      this.props.socket.emit("initRobotLoc", cb.bind(this));
     } else {
-        alert(`Cannot pan to boat! Socket not connected.\nTry again later!`);
-      }
+      alert(`Cannot pan to boat! Socket not connected.\nTry again later!`);
+    }
     // var location = [39.1705, 117.1962];
     // this.mapEs.panTo(location);
     // this.mapGr.panTo(location);
@@ -291,9 +298,9 @@ class GraphMap extends React.Component {
       this.props.socket.on("graph/update", this._loadGraphUpdate.bind(this));
     }
 
-    if (this.props.mode === 'boat'){
-      this.props.socket.on('status', this._updateWaypoint.bind(this));
-      this.props.socket.on('robot/loc', this._updateRobotLocation.bind(this));
+    if (this.props.mode === "boat") {
+      this.props.socket.on("status", this._updateWaypoint.bind(this));
+      this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
     }
@@ -329,10 +336,9 @@ class GraphMap extends React.Component {
       this.props.socket.off("graph/update", this._loadGraphUpdate.bind(this));
     }
 
-    if (this.props.mode === 'boat'){
-      this.props.socket.off('status', this._updateWaypoint.bind(this));
-      this.props.socket.off('robot/loc', this._updateRobotLocation.bind(this));
-
+    if (this.props.mode === "boat") {
+      this.props.socket.off("status", this._updateWaypoint.bind(this));
+      this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
     }
   }
 
@@ -695,10 +701,8 @@ class GraphMap extends React.Component {
                       flexDirection={"row"}
                       justifyContent="space-around"
                     >
-                      <HighlightOff style={{color: 'red'}} />
-                      <span>
-                        Delete
-                      </span>
+                      <HighlightOff style={{ color: "red" }} />
+                      <span>Delete</span>
                     </Box>
                   </MenuItem>
                 </Menu>
@@ -712,7 +716,7 @@ class GraphMap extends React.Component {
                     })}
                     opacity={0.85}
                     zIndexOffset={1600}
-                />
+                  />
                 )}
               </LeafletMap>
             </Box>
@@ -768,20 +772,24 @@ class GraphMap extends React.Component {
           </Box>
         )}
         {mode === "boat" && (
-          <button
+          <Button
             onClick={this.focus.bind(this)}
-            style={{ position: "absolute", left: "50%" }}
+            variant="contained"
+            color="primary"
+            style={{ position: "absolute", left: "40%" }}
           >
             locate boat
-          </button>
+          </Button>
         )}
         {mode === "boat" && (
-          <button
+          <Button
             onClick={this.go.bind(this)}
-            style={{ position: "absolute", left: "50%" }}
+            variant="contained"
+            color="primary"
+            style={{ position: "absolute", left: "60%" }}
           >
             Go
-          </button>
+          </Button>
         )}
       </>
     );
@@ -1802,14 +1810,12 @@ class GraphMap extends React.Component {
     //if not successful, return success + msg
     let cb = (success, wayps) => {
       if (success) {
-        this.setState(
-          {
-            waypoints: wayps.queue.map((wayp) => ({
-              latlng: [wayp.latitude, wayp.longitude],
-              key: wayp.id,
-            })),
-          }
-        );
+        this.setState({
+          waypoints: wayps.queue.map((wayp) => ({
+            latlng: [wayp.latitude, wayp.longitude],
+            key: wayp.id,
+          })),
+        });
         console.log("Initial waypoints successfully loaded");
       } else {
         alert(`Loading initial waypoints failed: ${wayps}`);
@@ -1819,11 +1825,12 @@ class GraphMap extends React.Component {
     this.setState((state, props) => {
       console.log("Loading intial waypoints...");
 
-      if(props.socketConnected){
-        props.socket.emit('goal/init', cb.bind(this));
-      }
-      else{
-        alert(`Cannot load initial waypoints! Socket not connected.\nTry again later!`);
+      if (props.socketConnected) {
+        props.socket.emit("goal/init", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load initial waypoints! Socket not connected.\nTry again later!`
+        );
       }
     });
   }
@@ -1899,7 +1906,7 @@ class GraphMap extends React.Component {
   /**
    * @brief send a request to delete this waypoint
    */
-  _deleteWayp(){
+  _deleteWayp() {
     let callback = (success) => {
       if (!success) {
         alert(`Failed to delete the waypoint`);
@@ -1910,9 +1917,7 @@ class GraphMap extends React.Component {
 
     this.setState((state, props) => {
       if (props.socketConnected) {
-        console.log(
-          `Requesting to delete waypoint`
-        );
+        console.log(`Requesting to delete waypoint`);
         props.socket.emit(
           "goal/cancel",
           { id: state.selectedMarkerID },
@@ -1930,43 +1935,39 @@ class GraphMap extends React.Component {
   /**
    * @brief receives and updates the robot location
    */
-  _updateRobotLocation(latlng){
+  _updateRobotLocation(latlng) {
     this.setState({
-      robotloc: [latlng.latitude, latlng.longitude]
+      robotloc: [latlng.latitude, latlng.longitude],
     });
   }
 
   /**
    * @brief fetch the initial robot location
    */
-  _loadInitRobotLoc(){
+  _loadInitRobotLoc() {
     //if fetched successfully, return success + actual location
     //if not successful, return success + msg
     let cb = (success, robotLoc) => {
-      if(success){
-        this.setState(
-          {
-            robotloc: [robotLoc.latitude, robotLoc.longitude]
-          }
-        );
-        console.log('Initial robot location loaded successfully');
-      }
-      else{
+      if (success) {
+        this.setState({
+          robotloc: [robotLoc.latitude, robotLoc.longitude],
+        });
+        console.log("Initial robot location loaded successfully");
+      } else {
         alert(`Loading initial robot location failed: ${robotLoc}`);
       }
     };
 
     this.setState((state, props) => {
-      console.log('Loading intial robot location...');
-      if(props.socketConnected){
-        props.socket.emit('initRobotLoc', cb.bind(this));
-      }
-      else{
-        alert(`Cannot load initial robot location! Socket not connected.\nTry again later!`);
+      console.log("Loading intial robot location...");
+      if (props.socketConnected) {
+        props.socket.emit("initRobotLoc", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load initial robot location! Socket not connected.\nTry again later!`
+        );
       }
     });
-    
-    
   }
 }
 
