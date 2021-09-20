@@ -163,10 +163,10 @@ def pause(json):
   return True
 
 
-@socketio.on('map/offset')
+@socketio.on('graph/offset')
 def move_graph(json):
-  """Handles SocketIO request to update the map offset"""
-  logger.info('Client requests to update the map offset!')
+  """Handles SocketIO request to update the graph offset"""
+  logger.info('Client requests to update the graph offset!')
   utils.move_graph(node, float(json["x"]), float(json["y"]),
                    float(json["theta"]), json["scale"])
 
