@@ -47,28 +47,18 @@ except:
 SOCKET_ADDRESS = 'localhost'
 SOCKET_PORT = 5201
 
-logging.basicConfig(level=logging.WARNING)
-
-log = logging.getLogger('SocketServer')
-log.setLevel(logging.INFO)
-
-elog = logging.getLogger('engineio')
-slog = logging.getLogger('socketio')
-rlog = logging.getLogger('requests')
-elog.setLevel(logging.ERROR)
-slog.setLevel(logging.ERROR)
-rlog.setLevel(logging.ERROR)
+logger = logging.getLogger('SocketServer')
 
 app = flask.Flask(__name__)
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 app.secret_key = 'asecretekey'
 
 app.logger.setLevel(logging.ERROR)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 socketio = flask_socketio.SocketIO(app,
-                                   logger=slog,
-                                   engineio_logger=elog,
+                                   logger=False,
+                                   engineio_logger=False,
                                    ping_interval=1,
                                    ping_timeout=2,
                                    cors_allowed_origins="*")
@@ -81,19 +71,12 @@ def main():
 
 @socketio.on('connect')
 def on_connect():
-  log.info('Client connected!')
+  logger.info('Client connected!')
 
 
 @socketio.on('disconnect')
 def on_disconnect():
-  log.info('Client disconnected!')
-
-
-@socketio.on('kill')
-def kill():
-  """Stops the server politely"""
-  log.info("Received termination request. Shutting down!")
-  socketio.stop()
+  logger.info('Client disconnected!')
 
 
 ##### VTR specific calls #####
@@ -102,7 +85,7 @@ def kill():
 @socketio.on('goal/add')
 def add_goal(json):
   """Handles SocketIO request to add a goal"""
-  log.info('Client requests to add a goal!')
+  logger.info('Client requests to add a goal!')
   goal_str = json.get('type', None)
   if goal_str is None:
     return False, u"Goal type is a mandatory field"
@@ -125,7 +108,6 @@ def add_goal(json):
     return False, u"Non-numeric pause duration received"
 
   try:
-    log.info(json.get('path', []))
     path = [int(x) for x in json.get('path', [])]
   except Exception:
     return False, u"Non-integer vertex id supplied in path"
@@ -136,7 +118,7 @@ def add_goal(json):
   rclient = vtr_mission_planning.remote_client()
   goal_id = rclient.add_goal(goal_type, path, pause_before, pause_after,
                              json.get('vertex', 2**64 - 1))
-  log.info("New goal: %s", goal_str)
+  logger.info("New goal: %s", goal_str)
 
   return True, goal_id
 
@@ -144,9 +126,9 @@ def add_goal(json):
 @socketio.on('goal/cancel')
 def cancel_goal(json):
   """Handles SocketIO request to cancel a goal"""
-  log.info('Client requests to cancel a goal!')
+  logger.info('Client requests to cancel a goal!')
   goal_id = json.get('id', 'all')
-  log.info("Cancelling goal %s", goal_id)
+  logger.info("Cancelling goal %s", goal_id)
 
   if goal_id == 'all':
     result = vtr_mission_planning.remote_client().cancel_all()
@@ -159,23 +141,20 @@ def cancel_goal(json):
 @socketio.on('goal/cancel/all')
 def cancel_all():
   """Handles SocketIO request to cancel all goals"""
-  log.info('Client requests to cancel all goals!')
+  logger.info('Client requests to cancel all goals!')
   return vtr_mission_planning.remote_client().cancel_all()
 
 
 @socketio.on('goal/move')
 def move_goal(json):
   """Handles SocketIO request to re-arrange goals"""
-  log.info('Client requests to re-arrange goals!')
+  logger.info('Client requests to re-arrange goals!')
 
 
 @socketio.on('pause')
 def pause(json):
-  """Handle socketIO messages to pause the mission server
-
-  :param json: dictionary containing the desired pause state
-  """
-  log.info('Client requests to pause the mission server!')
+  """Handle socketIO messages to pause the mission server"""
+  logger.info('Client requests to pause the mission server!')
   paused = json.get('paused', None)
   if paused is None:
     return False, u"The pause state is a mandatory parameter"
@@ -184,10 +163,10 @@ def pause(json):
   return True
 
 
-@socketio.on('map/offset')
+@socketio.on('graph/offset')
 def move_graph(json):
-  """Handles SocketIO request to update the map offset"""
-  log.info('Client requests to update the map offset!')
+  """Handles SocketIO request to update the graph offset"""
+  logger.info('Client requests to update the graph offset!')
   utils.move_graph(node, float(json["x"]), float(json["y"]),
                    float(json["theta"]), json["scale"])
 
@@ -195,14 +174,14 @@ def move_graph(json):
 @socketio.on('graph/pins')
 def pin_graph(json):
   """Handles SocketIO request to update the graph pins"""
-  log.info('Client requests to update the graph pins!')
+  logger.info('Client requests to update the graph pins!')
   utils.pin_graph(node, json["pins"])
 
 
 @socketio.on('graph/cmd')
 def graph_cmd(req):
   """Handles SocketIO request of a graph command"""
-  log.info('Client sends a request of graph command!')
+  logger.info('Client sends a request of graph command!')
 
   ros_service = node.create_client(MissionCmd, "mission_cmd")
   while not ros_service.wait_for_service(timeout_sec=1.0):
@@ -233,18 +212,10 @@ def graph_cmd(req):
   return response.result()
 
 
-@socketio.on('dialog/response')
-def dialog_response(json):
-  """Handles SocketIO request of a dialog response(TODO what is this?)"""
-  log.info('Client sends a dialog response!')
-
-
 @socketio.on('message')
 def handle_notifications(json):
   """Re-broadcasts incoming notifications from the mission client, every message
   from VTR2 goes to here.
-
-  :param json Dictionary with keys 'args' (list/tuple) and 'kwargs' (dict)
   """
   # Match vtr_planning.mission_client.Notification
   callbacks = {
@@ -258,38 +229,32 @@ def handle_notifications(json):
       'RobotChange': broadcast_robot,
       'PathChange': broadcast_path,
       'GraphChange': broadcast_graph,
-      'SafetyStatus': broadcast_safety,
-      'NewDialog': broadcast_new_dialog,
-      'CancelDialog': broadcast_cancel_dialog,
-      'ReplaceDialog': broadcast_replace_dialog,
-      'FinishDialog': broadcast_finish_dialog,
-      'OverlayRefresh': broadcast_overlay
   }
 
   try:
     callbacks[json['type']](*json['args'], **json['kwargs'])
   except KeyError as e:
-    log.error('A client disconnected ungracefully: {}.'.format(str(e)))
+    logger.error('A client disconnected ungracefully: {}.'.format(str(e)))
 
 
 def broadcast_new(goal):
   """Broadcasts socketIO messages to all clients on new goal addition
-
-  :param goal Dictionary representing the fields of the added goal
+  Args:
+    goal: Dictionary representing the fields of the added goal
   """
-  log.info('Broadcast new goal: %s.', str(goal))
+  logger.info('Broadcast new goal: %s.', str(goal))
   socketio.emit(u"goal/new", goal, broadcast=True)
 
 
 def broadcast_error(goal_id, goal_status):
   """Broadcasts socketIO messages to all clients on errors
-
-  :param goal_id The id of the failed goal
-  :param goal_status Status enum representing the failure reason
+  Args:
+    goal_id The id of the failed goal
+    goal_status Status enum representing the failure reason
   """
-  log.info('Broadcast error.')
+  logger.info('Broadcast error.')
   msg = "An unknown error occurred; check the console for more information"
-  log.warning(
+  logger.warning(
       "An unexpected goal status (%d) occurred while broadcasting errors",
       goal_status)
 
@@ -298,38 +263,38 @@ def broadcast_error(goal_id, goal_status):
 
 def broadcast_cancel(goal_id):
   """Broadcasts socketIO messages to all clients on goal cancellation
-
-  :param goal_id The id of the cancelled goal
+  Args:
+    goal_id: The id of the cancelled goal
   """
-  log.info('Broadcast cancel.')
+  logger.info('Broadcast cancel.')
   socketio.emit(u"goal/cancelled", {'id': goal_id}, broadcast=True)
 
 
 def broadcast_success(goal_id):
   """Broadcasts socketIO messages to all clients on goal completion
-
-  :param goal_id The id of the finished goal
+  Args:
+    goal_id: The id of the finished goal
   """
-  log.info('Broadcast success.')
+  logger.info('Broadcast success.')
   socketio.emit(u"goal/success", {'id': goal_id}, broadcast=True)
 
 
 def broadcast_started(goal_id):
   """Broadcasts socketIO messages to all clients when a goal becomes active
-
-  :param goal_id The id of the goal that was started
+  Args:
+    goal_id: The id of the goal that was started
   """
-  log.info('Broadcast started.')
+  logger.info('Broadcast started.')
   socketio.emit(u"goal/started", {'id': goal_id}, broadcast=True)
 
 
 def broadcast_feedback(goal_id, feedback):
   """Broadcasts socketIO messages to all clients on new feedback for any goal
-
-  :param goal_id The id of the goal receiving feedback
-  :param feedback Dictionary representing the feedback message
+  Args:
+    goal_id: The id of the goal receiving feedback
+    feedback: Dictionary representing the feedback message
   """
-  log.info('Broadcast feedback.')
+  logger.info('Broadcast feedback.')
   data = feedback
   data['id'] = goal_id
   socketio.emit(u"goal/feedback", data, broadcast=True)
@@ -338,11 +303,11 @@ def broadcast_feedback(goal_id, feedback):
 def broadcast_status(status, queue):
   """Broadcasts socketIO messages to all clients on status change in the mission
   server status
-
-  :param status The current state of the mission server {EMPTY|PAUSED|PROCESSING|PENDING_PAUSE}
-  :param queue List of all current goal ids, ordered by execution priority
+  Args:
+    status: The current state of the mission server {EMPTY|PAUSED|PROCESSING|PENDING_PAUSE}
+    queue: List of all current goal ids, ordered by execution priority
   """
-  log.info('Broadcast status.')
+  logger.info('Broadcast status.')
   text = {
       MissionStatus.PROCESSING: "PROCESSING",
       MissionStatus.PAUSED: "PAUSED",
@@ -371,16 +336,15 @@ def broadcast_robot(
     cov_leaf_target,
 ):
   """Broadcasts socketIO messages to all clients on position change of the robot
-
-  :param seq The integer sequence of the robot along the current localization chain
-  :param vertex Current closest vertex ID to the robot
-  :param tf_leaf_trunk Transform from robot to trunk
-  :param cov_leaf_trunk Covariance (diagonal) of the robot to trunk transform
-  :param target_vertex The target vertex we are trying to merge into
-  :param tf_leaf_target Transform from robot to target
-  :param cov_leaf_target Covariance of the robot to target transform
+  Args:
+    vertex: Current closest vertex ID to the robot
+    tf_leaf_trunk: Transform from robot to trunk
+    cov_leaf_trunk: Covariance (diagonal) of the robot to trunk transform
+    target_vertex: The target vertex we are trying to merge into
+    tf_leaf_target: Transform from robot to target
+    cov_leaf_target: Covariance of the robot to target transform
   """
-  log.info('Broadcast robot')
+  logger.info('Broadcast robot')
   status = graph_pb2.RobotStatus()
   # status.seq = seq
   status.vertex = vertex
@@ -418,19 +382,19 @@ def broadcast_robot(
 
 def broadcast_path(path):
   """Broadcasts socketIO messages to all clients on position change of the robot
-
-  :param path List of vertices representing the current localization chain
+  Args:
+    path: List of vertices representing the current localization chain
   """
-  log.info("Broadcasting new path %s", str(path))
+  logger.info("Broadcasting new path %s", str(path))
   socketio.emit(u"robot/path", {'path': path}, broadcast=True)
 
 
 def broadcast_graph(msg):
   """Broadcasts socketIO messages to all clients on updates to the graph
-
-  :param msg Update message from ROS
+  Args:
+    msg: Update message from ROS
   """
-  log.info('Broadcast graph')
+  logger.info('Broadcast graph')
   update = graph_pb2.GraphUpdate()
   update.seq = msg['seq']
   update.stamp = msg['stamp']
@@ -449,46 +413,14 @@ def broadcast_graph(msg):
                 broadcast=True)
 
 
-def broadcast_safety(msg):
-  """Broadcasts socketIO messages to all clients on safety monitor updates
-
-  :param msg Status message from ROS
-  """
-  log.info('Broadcast safety status')
-  # status = SafetyStatus()
-  # status.signal = msg['signal']
-  # status.action = msg['action']
-
-  # socketio.emit(u"safety", bytes(status.SerializeToString()), broadcast=True)
-
-
-def broadcast_new_dialog(dialog_dict):
-  log.info('Broadcast new dialog')
-  # socketio.emit(u"dialog/new", dialog_dict, broadcast=True)
-
-
-def broadcast_cancel_dialog(dialog_id):
-  log.info('Broadcast cancel dialog')
-  # socketio.emit(u"dialog/cancel", {"id": dialog_id}, broadcast=True)
-
-
-def broadcast_replace_dialog(dialog_dict):
-  log.info('Broadcast replace dialog')
-  # socketio.emit(u"dialog/replace", dialog_dict, broadcast=True)
-
-
-def broadcast_finish_dialog(dialog_id):
-  log.info('Broadcast finish dialog')
-  # socketio.emit(u"dialog/finish", {"id": dialog_id}, broadcast=True)
-
-
-def broadcast_overlay():
-  log.info('Broadcast overlay')
-  # socketio.emit(u"overlay/refresh")
-
-
 def main():
-  log.info("Launching the socket server.")
+  logger.setLevel(logging.INFO)
+  hd = logging.StreamHandler()
+  fm = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+  hd.setFormatter(fm)
+  logger.addHandler(hd)
+
+  logger.info("Launching the socket server.")
 
   # TODO: Server runs on all interfaces.  Can we assume a trusted network?
   socketio.run(app, host=SOCKET_ADDRESS, port=SOCKET_PORT, use_reloader=False)

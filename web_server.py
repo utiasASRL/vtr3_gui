@@ -49,16 +49,13 @@ except:
 UI_ADDRESS = '0.0.0.0'
 UI_PORT = 5200
 
-logging.basicConfig(level=logging.WARNING)
-
-log = logging.getLogger('WebServer')
-log.setLevel(logging.INFO)
+logger = logging.getLogger('WebServer')
 
 app = flask.Flask(__name__,
                   static_folder="vtr-ui/build",
                   template_folder="vtr-ui/build",
                   static_url_path="")
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 app.config['CACHE'] = True
 app.config['CACHE_PATH'] = osp.abspath(osp.join(osp.dirname(__file__), 'cache'))
 app.config['PROTO_PATH'] = osp.abspath(osp.dirname(__file__))
@@ -95,7 +92,7 @@ def tile_cache(s, x, y, z):
   fpath = osp.join(fdir, fname)
 
   if app.config['CACHE'] and osp.isfile(fpath):
-    log.debug("Using cached tile {%s,%s,%s}", x, y, z)
+    logger.debug("Using cached tile {%s,%s,%s}", x, y, z)
     return flask.send_from_directory(fdir, fname, max_age=60 * 60 * 24 * 30)
 
   headers = {
@@ -112,30 +109,30 @@ def tile_cache(s, x, y, z):
   try:
     res = requests.get(url, headers=headers, verify=False)
   except RequestException as e:
-    log.error('Error loading tile {%s,%s,%s}: %s', x, y, z, e)
+    logger.error('Error loading tile {%s,%s,%s}: %s', x, y, z, e)
     flask.abort(500)
 
   if res.ok:
     try:
       sio = io.BytesIO(res.content)
       if app.config['CACHE']:
-        log.debug("Caching tile: {%s,%s,%s}", x, y, z)
+        logger.debug("Caching tile: {%s,%s,%s}", x, y, z)
         os.makedirs(fdir, exist_ok=True)
         img = Image.open(sio)
         img.save(fpath)
       else:
-        log.debug("Proxying tile: {%s,%s,%s}", x, y, z)
+        logger.debug("Proxying tile: {%s,%s,%s}", x, y, z)
 
       sio.seek(0)
       return flask.send_file(sio,
                              mimetype='image/jpeg',
                              max_age=60 * 60 * 24 * 30)
     except Exception as e:
-      log.error('Something went really sideways on tile {%s,%s,%s}: %s', x, y,
-                z, e)
+      logger.error('Something went really sideways on tile {%s,%s,%s}: %s', x,
+                   y, z, e)
       flask.abort(500)
   else:
-    log.warning("Tile {%s,%s,%s} did not exist on server", x, y, z)
+    logger.warning("Tile {%s,%s,%s} did not exist on server", x, y, z)
 
   flask.abort(404)
 
@@ -146,6 +143,7 @@ def tile_cache(s, x, y, z):
 @app.route('/api/map/<seq>')
 def get_map(seq):
   """API endpoint to get the full map"""
+  logger.info("Fetching graph with sequence number: {}".format(seq))
   graph = utils.get_graph(node, seq)
 
   proto_graph = graph_pb2.Graph()
@@ -238,7 +236,13 @@ def get_goals():
 
 
 def main():
-  log.info("Launching the web server.")
+  logger.setLevel(logging.INFO)
+  hd = logging.StreamHandler()
+  fm = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+  hd.setFormatter(fm)
+  logger.addHandler(hd)
+
+  logger.info("Launching the web server.")
 
   # TODO: Server runs on all interfaces. Can we assume a trusted network?
   app.run(threaded=True, host=UI_ADDRESS, port=UI_PORT, use_reloader=False)
