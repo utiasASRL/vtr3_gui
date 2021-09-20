@@ -143,6 +143,7 @@ def tile_cache(s, x, y, z):
 @app.route('/api/map/<seq>')
 def get_map(seq):
   """API endpoint to get the full map"""
+  logger.info("Fetching graph with sequence number: {}".format(seq))
   graph = utils.get_graph(node, seq)
 
   proto_graph = graph_pb2.Graph()
