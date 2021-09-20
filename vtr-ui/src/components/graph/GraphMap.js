@@ -1351,7 +1351,7 @@ class GraphMap extends React.Component {
               change.scale === 1
             ) // something changed
           )
-            props.socket.emit("map/offset", change);
+            props.socket.emit("graph/offset", change);
           return {
             moveMapOrigin: L.latLng(43.782, -79.466),
             transLoc: L.latLng(43.782, -79.466),
