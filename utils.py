@@ -16,7 +16,7 @@ import threading
 
 import rclpy
 from geometry_msgs.msg import Pose2D
-from vtr_messages.msg import GraphPin
+from vtr_pose_graph_msgs.msg import Pin as GraphPin
 from vtr_messages.srv import GraphRelaxation, GraphCalibration, GraphPinning
 
 # A thread lock for ROS to avoid synchronization issues
