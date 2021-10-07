@@ -192,7 +192,7 @@ class GraphMap extends React.Component {
       menuPos: [0, 0],
       selectedMarkerID: 0,
       robotloc: null,
-      robotangle: 0
+      robotangle: 0,
     };
 
     // Get the underlying leaflet map.
@@ -720,8 +720,6 @@ class GraphMap extends React.Component {
                     zIndexOffset={1600}
                   />
                 )}
-                
-
               </LeafletMap>
             </Box>
             <Box
@@ -1940,26 +1938,35 @@ class GraphMap extends React.Component {
    * given the magnetometer readings & latlng
    * https://www.w3.org/TR/magnetometer/#compass
    */
-  _robotOrientation(latlngtheta){
-    let angle_mag_north = Math.atan2(latlngtheta.orientation.y, latlngtheta.orientation.x) * (180 / Math.PI);
+  _robotOrientation(latlngtheta) {
+    let angle_mag_north =
+      Math.atan2(latlngtheta.orientation[1], latlngtheta.orientation[0]) *
+      (180 / Math.PI);
     let declination = 0; // diff between the magnetic and geographic north
-    fetch('https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination' +
-      '?lat1=' + latlngtheta.latitude + '&lon1=' + latlngtheta.longitude + '&resultFormat=csv')
-        .then(response => response.text()).then(text => {
-          declination = parseFloat(text.replace(/^#.*$/gm, '').trim().split(',')[4])
-        });
-    return (angle_mag_north + declination - 45);
-
+    fetch(
+      "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination" +
+        "?lat1=" +
+        latlngtheta.latitude +
+        "&lon1=" +
+        latlngtheta.longitude +
+        "&resultFormat=csv"
+    )
+      .then((response) => response.text())
+      .then((text) => {
+        declination = parseFloat(
+          text.replace(/^#.*$/gm, "").trim().split(",")[4]
+        );
+      });
+    return angle_mag_north + declination - 90;
   }
 
   /**
    * @brief receives and updates the robot location
    */
-  _updateRobotLocation(latlngtheta){
-    
+  _updateRobotLocation(latlngtheta) {
     this.setState({
       robotloc: [latlngtheta.latitude, latlngtheta.longitude],
-      robotangle: this._robotOrientation(latlngtheta)
+      robotangle: this._robotOrientation(latlngtheta),
     });
   }
 
@@ -1970,27 +1977,25 @@ class GraphMap extends React.Component {
     //if fetched successfully, return success + actual location
     //if not successful, return success + msg
     let cb = (success, robotLoc) => {
-      if(success){
-        this.setState(
-          {
-            robotloc: [robotLoc.latitude, robotLoc.longitude],
-            robotangle: this._robotOrientation(robotLoc)
-          }
-        );
-        console.log('Initial robot location loaded successfully');
-      }
-      else{
+      if (success) {
+        this.setState({
+          robotloc: [robotLoc.latitude, robotLoc.longitude],
+          robotangle: this._robotOrientation(robotLoc),
+        });
+        console.log("Initial robot location loaded successfully");
+      } else {
         alert(`Loading initial robot location failed: ${robotLoc}`);
       }
     };
 
     this.setState((state, props) => {
-      console.log('Loading initial robot location...');
-      if(props.socketConnected){
-        props.socket.emit('initRobotLoc', cb.bind(this));
-      }
-      else{
-        alert(`Cannot load initial robot location! Socket not connected.\nTry again later!`);
+      console.log("Loading initial robot location...");
+      if (props.socketConnected) {
+        props.socket.emit("initRobotLoc", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load initial robot location! Socket not connected.\nTry again later!`
+        );
       }
     });
   }
