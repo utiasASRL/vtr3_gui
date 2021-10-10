@@ -193,6 +193,7 @@ class GraphMap extends React.Component {
       selectedMarkerID: 0,
       robotloc: null,
       robotangle: 0,
+      pastpath: []
     };
 
     // Get the underlying leaflet map.
@@ -720,6 +721,16 @@ class GraphMap extends React.Component {
                     zIndexOffset={1600}
                   />
                 )}
+
+                {/*robot past path*/}
+                <Polyline
+                  color={"#f50057"}
+                  opacity={poseGraphOpacity}
+                  positions={[[43.782, -79.466], [42, -79.466]]}
+                  weight={5}
+                />
+                
+
               </LeafletMap>
             </Box>
             <Box
@@ -1775,7 +1786,7 @@ class GraphMap extends React.Component {
    */
   _updateWaypoint(wayps) {
     this.setState({
-      waypoints: wayps.queue.map((wayp) => ({
+      waypoints: (wayps.queue).map((wayp) => ({
         latlng: [wayp.latitude, wayp.longitude],
         key: wayp.id,
       })),
@@ -1813,7 +1824,7 @@ class GraphMap extends React.Component {
     let cb = (success, wayps) => {
       if (success) {
         this.setState({
-          waypoints: wayps.queue.map((wayp) => ({
+          waypoints: (wayps.queue).map((wayp) => ({
             latlng: [wayp.latitude, wayp.longitude],
             key: wayp.id,
           })),
@@ -1898,10 +1909,12 @@ class GraphMap extends React.Component {
   _onContextMenuMarker(e) {
     //opens the menu
     //updates the position of the menu
-    this.setState({
-      showMenu: true,
-      menuPos: [e.originalEvent.clientX, e.originalEvent.clientY],
-      selectedMarkerID: e.target.options.key,
+    this.setState((state, props) => {
+      return({
+        showMenu: true,
+        menuPos: [e.originalEvent.clientX, e.originalEvent.clientY],
+        selectedMarkerID: (state.waypoints[e.target.options.id - 1].key)
+      });
     });
   }
 
@@ -1963,10 +1976,18 @@ class GraphMap extends React.Component {
   /**
    * @brief receives and updates the robot location
    */
-  _updateRobotLocation(latlngtheta) {
-    this.setState({
-      robotloc: [latlngtheta.latitude, latlngtheta.longitude],
-      robotangle: this._robotOrientation(latlngtheta),
+
+  _updateRobotLocation(latlngtheta){
+    //save this new location to the past path
+    this.setState((prevstate) => {
+      let path = prevstate.pastpath;
+      path.push([latlngtheta.latitude, latlngtheta.longitude]);
+
+      return({
+        robotloc: [latlngtheta.latitude, latlngtheta.longitude],
+        robotangle: this._robotOrientation(latlngtheta),
+        pastpath: path
+      })
     });
   }
 
@@ -1977,13 +1998,20 @@ class GraphMap extends React.Component {
     //if fetched successfully, return success + actual location
     //if not successful, return success + msg
     let cb = (success, robotLoc) => {
-      if (success) {
-        this.setState({
-          robotloc: [robotLoc.latitude, robotLoc.longitude],
-          robotangle: this._robotOrientation(robotLoc),
+      if(success){
+        this.setState((prevstate) => {
+          let path = prevstate.pastpath;
+          path.push([robotLoc.latitude, robotLoc.longitude]);
+    
+          return({
+            robotloc: [robotLoc.latitude, robotLoc.longitude],
+            robotangle: this._robotOrientation(robotLoc),
+            pastpath: path
+          })
         });
-        console.log("Initial robot location loaded successfully");
-      } else {
+        console.log('Initial robot location loaded successfully');
+      }
+      else{
         alert(`Loading initial robot location failed: ${robotLoc}`);
       }
     };
