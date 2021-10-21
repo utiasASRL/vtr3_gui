@@ -308,7 +308,7 @@ class GraphMap extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.props.mode === "vtr") {
       // Reload graph after reconnecting to SocketIO.
       if (!prevProps.socketConnected && this.props.socketConnected)
@@ -726,7 +726,7 @@ class GraphMap extends React.Component {
                 <Polyline
                   color={"#f50057"}
                   opacity={poseGraphOpacity}
-                  positions={[[43.782, -79.466], [42, -79.466]]}
+                  positions={this.state.pastpath}
                   weight={5}
                 />
                 
@@ -1975,6 +1975,7 @@ class GraphMap extends React.Component {
 
   /**
    * @brief receives and updates the robot location
+   * also saves the past robot location to pastpath
    */
 
   _updateRobotLocation(latlngtheta){
@@ -1982,7 +1983,7 @@ class GraphMap extends React.Component {
     this.setState((prevstate) => {
       let path = prevstate.pastpath;
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
-
+      
       return({
         robotloc: [latlngtheta.latitude, latlngtheta.longitude],
         robotangle: this._robotOrientation(latlngtheta),
@@ -1991,6 +1992,7 @@ class GraphMap extends React.Component {
     });
   }
 
+  
   /**
    * @brief fetch the initial robot location
    */
