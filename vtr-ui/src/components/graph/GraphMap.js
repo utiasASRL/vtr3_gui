@@ -193,7 +193,8 @@ class GraphMap extends React.Component {
       selectedMarkerID: 0,
       robotloc: null,
       robotangle: 0,
-      pastpath: []
+      pastpath: [],
+      GPMean: null
     };
 
     // Get the underlying leaflet map.
@@ -303,8 +304,10 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.on("status", this._updateWaypoint.bind(this));
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
+      this.props.socket.on("graph/update", this._updateGP.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
+      this._loadInitGP();
     }
   }
 
@@ -341,6 +344,7 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.off("status", this._updateWaypoint.bind(this));
       this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
+      this.props.socket.off("graph/update", this._updateGP.bind(this));
     }
   }
 
@@ -650,14 +654,16 @@ class GraphMap extends React.Component {
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
                     <FeatureGroup color="purple">
+                      {this.state.GPMean != null && (
                       <HeatmapLayer
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
-                        points={addressPoints}
+                        points={this.state.GPMean}
                         longitudeExtractor={(m) => m[1]}
                         latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
+                        intensityExtractor={(m) => m[2]}
                       />
+                     )}
                     </FeatureGroup>
                   </LayersControl.Overlay>
                   <LayersControl.Overlay name="Variance" checked={false}>
@@ -1782,9 +1788,10 @@ class GraphMap extends React.Component {
   }
 
   /**
-   * @brief receive and update waypoint list from the ros nodes
-   */
+  * @brief receive and update waypoint list from the ros nodes
+  */
   _updateWaypoint(wayps) {
+    console.log("Updating waypoints");
     this.setState({
       waypoints: (wayps.queue).map((wayp) => ({
         latlng: [wayp.latitude, wayp.longitude],
@@ -1792,6 +1799,18 @@ class GraphMap extends React.Component {
       })),
     });
   }
+
+  /**
+   * @brief receive and update waypoint list from the ros nodes
+   */
+  _updateGP(gp) {
+    console.log("Updating GP")
+    console.log(gp.mean)
+    this.setState({
+      GPMean: gp.mean
+    });
+  }
+
   /**
    * @brief requests the ros node to append a new waypoint at where user doubleclicked
    */
@@ -1815,31 +1834,53 @@ class GraphMap extends React.Component {
   }
 
   /**
+   * @brief load the initial GP mean and variance
+   * Make a request for the GP graph
+   */
+   _loadInitGP() {
+    //if fetched successfully, return success + actual goal list
+    //if not successful, return success + msg
+    this.setState((state, props) => {
+      console.log("Loading initial GP...");
+
+      if (props.socketConnected) {
+        console.log("Emit request");
+        props.socket.emit("gp/init");
+      } else {
+        alert(
+          `Cannot load initial GP! Socket not connected.\nTry again later!`
+        );
+      }
+    });
+  }
+
+  /**
    * @brief load the initial waypoints
    * Make a request for the waypoint list
    */
   _loadInitWaypoints() {
     //if fetched successfully, return success + actual goal list
     //if not successful, return success + msg
-    let cb = (success, wayps) => {
-      if (success) {
-        this.setState({
-          waypoints: (wayps.queue).map((wayp) => ({
-            latlng: [wayp.latitude, wayp.longitude],
-            key: wayp.id,
-          })),
-        });
-        console.log("Initial waypoints successfully loaded");
-      } else {
-        alert(`Loading initial waypoints failed: ${wayps}`);
-      }
-    };
+    // let cb = (success, wayps) => {
+    //   if (success) {
+    //     this.setState({
+    //       waypoints: (wayps.queue).map((wayp) => ({
+    //         latlng: [wayp.latitude, wayp.longitude],
+    //         key: wayp.id,
+    //       })),
+    //     });
+    //     console.log("Initial waypoints successfully loaded");
+    //   } else {
+    //     alert(`Loading initial waypoints failed: ${wayps}`);
+    //   }
+    // };
 
     this.setState((state, props) => {
       console.log("Loading initial waypoints...");
 
       if (props.socketConnected) {
-        props.socket.emit("goal/init", cb.bind(this));
+        // props.socket.emit("goal/init", cb.bind(this));
+        props.socket.emit("goal/init");
       } else {
         alert(
           `Cannot load initial waypoints! Socket not connected.\nTry again later!`
