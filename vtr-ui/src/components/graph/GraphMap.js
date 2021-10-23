@@ -1989,8 +1989,8 @@ class GraphMap extends React.Component {
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
-      var future = prevstate.waypoints.slice();
-      future[0] = [latlngtheta.latitude, latlngtheta.longitude];
+      let future = prevstate.waypoints.map((wp) => wp["latlng"]).slice();
+      future.unshift([latlngtheta.latitude, latlngtheta.longitude]);
 
       return {
         robotloc: [latlngtheta.latitude, latlngtheta.longitude],
