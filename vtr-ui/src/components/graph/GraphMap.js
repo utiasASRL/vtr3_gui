@@ -1981,7 +1981,7 @@ class GraphMap extends React.Component {
   _updateRobotLocation(latlngtheta){
     //save this new location to the past path
     this.setState((prevstate) => {
-      let path = prevstate.pastpath;
+      let path = prevstate.pastpath.slice();
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
       
       return({
