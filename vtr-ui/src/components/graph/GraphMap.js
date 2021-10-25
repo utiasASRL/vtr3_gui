@@ -1861,26 +1861,26 @@ class GraphMap extends React.Component {
   _loadInitWaypoints() {
     //if fetched successfully, return success + actual goal list
     //if not successful, return success + msg
-    // let cb = (success, wayps) => {
-    //   if (success) {
-    //     this.setState({
-    //       waypoints: (wayps.queue).map((wayp) => ({
-    //         latlng: [wayp.latitude, wayp.longitude],
-    //         key: wayp.id,
-    //       })),
-    //     });
-    //     console.log("Initial waypoints successfully loaded");
-    //   } else {
-    //     alert(`Loading initial waypoints failed: ${wayps}`);
-    //   }
-    // };
+    let cb = (success, wayps) => {
+      if (success) {
+        this.setState({
+          waypoints: (wayps.queue).map((wayp) => ({
+            latlng: [wayp.latitude, wayp.longitude],
+            key: wayp.id,
+          })),
+        });
+        console.log("Initial waypoints successfully loaded");
+      } else {
+        alert(`Loading initial waypoints failed: ${wayps}`);
+      }
+    };
 
     this.setState((state, props) => {
       console.log("Loading initial waypoints...");
 
       if (props.socketConnected) {
-        // props.socket.emit("goal/init", cb.bind(this));
-        props.socket.emit("goal/init");
+        props.socket.emit("goal/init", cb.bind(this));
+        //props.socket.emit("goal/init");
       } else {
         alert(
           `Cannot load initial waypoints! Socket not connected.\nTry again later!`
