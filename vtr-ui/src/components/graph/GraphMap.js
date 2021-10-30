@@ -654,6 +654,7 @@ class GraphMap extends React.Component {
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
                     <FeatureGroup color="purple">
+                      {/* GP Mean */}
                       {this.state.GPMean != null && (
                       <HeatmapLayer
                         fitBoundsOnLoad={false}
