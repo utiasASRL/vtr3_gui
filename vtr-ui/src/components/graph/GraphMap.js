@@ -662,6 +662,9 @@ class GraphMap extends React.Component {
                         longitudeExtractor={(m) => m[1]}
                         latitudeExtractor={(m) => m[0]}
                         intensityExtractor={(m) => m[2]}
+                        radius={Number(10)}
+                        blur={Number(10)}
+                        max={Number(1)}
                       />
                      )}
                     </FeatureGroup>
