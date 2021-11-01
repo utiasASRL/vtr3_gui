@@ -194,7 +194,8 @@ class GraphMap extends React.Component {
       robotloc: null,
       robotangle: 0,
       pastpath: [],
-      GPMean: null
+      GPMean: null,
+      GPVariance: null
     };
 
     // Get the underlying leaflet map.
@@ -672,14 +673,20 @@ class GraphMap extends React.Component {
                   </LayersControl.Overlay>
                   <LayersControl.Overlay name="Variance" checked={false}>
                     <FeatureGroup color="purple">
+                      {/* GP Variance */}
+                      {this.state.GPVariance != null && (
                       <HeatmapLayer
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
-                        points={addressPoints}
+                        points={this.state.GPVariance}
                         longitudeExtractor={(m) => m[1]}
                         latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
+                        intensityExtractor={(m) => m[2]}
+                        radius={Number(10)}
+                        blur={Number(10)}
+                        max={Number(1)}
                       />
+                     )}
                     </FeatureGroup>
                   </LayersControl.Overlay>
                 </LayersControl>
@@ -1811,7 +1818,8 @@ class GraphMap extends React.Component {
     console.log("Updating GP")
     console.log(gp.mean)
     this.setState({
-      GPMean: gp.mean
+      GPMean: gp.mean,
+      GPVariance: gp.variance
     });
   }
 
