@@ -195,7 +195,8 @@ class GraphMap extends React.Component {
       robotangle: 0,
       pastpath: [],
       GPMean: null,
-      GPVariance: null
+      GPVariance: null,
+      GroundTruth: null
     };
 
     // Get the underlying leaflet map.
@@ -309,6 +310,7 @@ class GraphMap extends React.Component {
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
       this._loadInitGP();
+      this._loadGroundTruth();
     }
   }
 
@@ -785,14 +787,20 @@ class GraphMap extends React.Component {
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Ground Truth" checked>
                     <FeatureGroup color="purple">
+                      {/* Ground Truth */}
+                      {this.state.GroundTruth != null && (
                       <HeatmapLayer
                         fitBoundsOnLoad={false}
                         fitBoundsOnUpdate={false}
-                        points={addressPoints}
+                        points={this.state.GroundTruth}
                         longitudeExtractor={(m) => m[1]}
                         latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
+                        intensityExtractor={(m) => m[2]}
+                        radius={Number(10)}
+                        blur={Number(10)}
+                        max={Number(1)}
                       />
+                     )}
                     </FeatureGroup>
                   </LayersControl.Overlay>
                 </LayersControl>
@@ -1850,8 +1858,6 @@ class GraphMap extends React.Component {
    * Make a request for the GP graph
    */
    _loadInitGP() {
-    //if fetched successfully, return success + actual goal list
-    //if not successful, return success + msg
     this.setState((state, props) => {
       console.log("Loading initial GP...");
 
@@ -1861,6 +1867,35 @@ class GraphMap extends React.Component {
       } else {
         alert(
           `Cannot load initial GP! Socket not connected.\nTry again later!`
+        );
+      }
+    });
+  }
+
+  /**
+   * @brief load the STATIC ground truth function
+   * Make a request for the ground truth
+   */
+  _loadGroundTruth() {
+    let cb = (success, gt) => {
+      if (success) {
+        this.setState({
+          GroundTruth: gt.ground_truth
+        });
+        console.log("Ground truth successfully loaded");
+      } else {
+        alert(`Loading ground truth failed: ${wayps}`);
+      }
+    };
+
+    this.setState((state, props) => {
+      console.log("Loading ground truth...");
+
+      if (props.socketConnected) {
+        props.socket.emit("gt/init", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load ground truth! Socket not connected.\nTry again later!`
         );
       }
     });
