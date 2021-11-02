@@ -188,6 +188,7 @@ class GraphMap extends React.Component {
       transLoc: L.latLng(43.782, -79.466),
       //boat project specific: waypoint related
       waypoints: [],
+      waypointHistory: [], // ensure no repeating wayp ids
       showMenu: false,
       menuPos: [0, 0],
       selectedMarkerID: 0,
@@ -680,7 +681,7 @@ class GraphMap extends React.Component {
                   <WaypMarker
                     key={waypoint.key}
                     position={waypoint.latlng}
-                    id={id + 1}
+                    id={this.state.waypointHistory.indexOf(waypoint.key) + 1}
                     socket={this.props.socket}
                     oncontext={this._onContextMenuMarker.bind(this)}
                   />
@@ -1806,7 +1807,14 @@ class GraphMap extends React.Component {
       if (!success) {
         alert(`Failed to add a waypoint: ${msg}`);
       } else {
-        console.log("Waypoint successfully added!");
+        this.setState((prevstate) => {
+          let newWaypointHistory = prevstate.waypointHistory.slice();
+          newWaypointHistory.push(msg);
+          return {
+            waypointHistory: newWaypointHistory,
+          };
+        });
+        console.log(`Waypoint successfully added: ${msg}`);
       }
     };
 
@@ -1834,6 +1842,7 @@ class GraphMap extends React.Component {
             latlng: [wayp.latitude, wayp.longitude],
             key: wayp.id,
           })),
+          waypointHistory: wayps.queue.map((wayp) => wayp.id),
         });
         console.log("Initial waypoints successfully loaded");
       } else {
