@@ -1879,6 +1879,7 @@ class GraphMap extends React.Component {
   _loadGroundTruth() {
     let cb = (success, gt) => {
       if (success) {
+        console.log(gt.ground_truth);
         this.setState({
           GroundTruth: gt.ground_truth
         });
