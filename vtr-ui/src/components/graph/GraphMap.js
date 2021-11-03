@@ -1884,7 +1884,7 @@ class GraphMap extends React.Component {
         });
         console.log("Ground truth successfully loaded");
       } else {
-        alert(`Loading ground truth failed: ${wayps}`);
+        alert(`Loading ground truth failed: ${gt}`);
       }
     };
 
