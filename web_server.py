@@ -217,14 +217,14 @@ def init_state():
                        covLeafTarget=rclient.cov_leaf_target)
 
 @app.route('/api/graph/init')
-def init_state():
+def init_graph_state():
   """API endpoint to get the initial state of the GP"""
   rclient = ROSClient()
   rclient.start()
 
   return flask.jsonify(mean=rclient.gp['mean'],
                        variance=rclient.gp['variance'],
-                       ground_truth=rclient.ground_truth)
+                       ground_truth=rclient.ground_truth['ground_truth'])
 
 
 @app.route('/api/goal/all')
