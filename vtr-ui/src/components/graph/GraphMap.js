@@ -309,8 +309,9 @@ class GraphMap extends React.Component {
       this.props.socket.on("graph/update", this._updateGP.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
-      this._loadInitGP();
-      this._loadGroundTruth();
+      // this._loadInitGP();
+      // this._loadGroundTruth();
+      this._loadInitGraph();
     }
   }
 
@@ -996,6 +997,31 @@ class GraphMap extends React.Component {
       });
       return { branch: state.branch };
     }, this._updateRobotState.bind(this));
+  }
+
+  /** @brief Gets the initial graph from json data. */
+  _loadInitGraph() {
+    console.log("Loading initial Graph")
+    fetch("/api/graph/init")
+      .then((response) => {
+        if (response.status !== 200) {
+          console.error("Fetch initial graph failed: " + response.status);
+          return;
+        }
+        // Examine the text in the response
+        response.json().then((data) => {
+          this.setState(
+            {
+             GPMean: data.mean,
+             GPVariance: data.variance,
+             GroundTruth: data.ground_truth
+            }
+          );
+        });
+      })
+      .catch((err) => {
+        console.log("Fetch error: ", err);
+      });
   }
 
   /** @brief Gets the initial robot state from json data. */

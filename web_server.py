@@ -10,8 +10,11 @@ import requests
 from requests.exceptions import RequestException
 from PIL import Image
 
+VTR = False
+BOAT = True
+
 ## Try importing vtr specific modules and variables, or set them to None
-try:
+if VTR:
   import rclpy
 
   from vtr_messages.msg import GraphComponent
@@ -23,12 +26,13 @@ try:
   rclpy.init()
   node = rclpy.create_node("web_server")
   node.get_logger().info('Created node - web_server')
-except:
+elif BOAT:
   graph_pb2 = None
   utils = None
   GraphComponent = None
   vtr_mission_planning = None
   node = None
+  from boat_mission_planning.ros_client import ROSClient
 
 ## Config the web server
 # web server address and port
@@ -211,6 +215,16 @@ def init_state():
                        targetLngLatTheta=rclient.target_lng_lat_theta,
                        tfLeafTarget=rclient.t_leaf_target,
                        covLeafTarget=rclient.cov_leaf_target)
+
+@app.route('/api/graph/init')
+def init_state():
+  """API endpoint to get the initial state of the GP"""
+  rclient = ROSClient()
+  rclient.start()
+
+  return flask.jsonify(mean=rclient.gp['mean'],
+                       variance=rclient.gp['variance'],
+                       ground_truth=rclient.ground_truth)
 
 
 @app.route('/api/goal/all')
