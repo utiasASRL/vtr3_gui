@@ -251,7 +251,7 @@ class GraphMap extends React.Component {
   }
 
   go() {
-    let cb = (success, robotLoc) => {
+    let cb = (success, status) => {
       if (success) {
         console.log("Launching boat navigation");
       } else {
@@ -292,6 +292,22 @@ class GraphMap extends React.Component {
     // var location = [39.1705, 117.1962];
     // this.mapEs.panTo(location);
     // this.mapGr.panTo(location);
+  }
+  
+  sample() {
+    let cb = (success) => {
+      if (success) {
+        console.log('successfully start the sampler');
+      } else {
+        alert(`Fail to initialize the sampler`);
+      }
+    };
+
+    if (this.props.socketConnected) {
+      this.props.socket.emit("sample", cb.bind(this));
+    } else {
+      alert(`Cannot sample! Socket not connected.\nTry again later!`);
+    }
   }
 
   componentDidMount() {
@@ -796,7 +812,7 @@ class GraphMap extends React.Component {
             onClick={this.focus.bind(this)}
             variant="contained"
             color="primary"
-            style={{ position: "absolute", left: "40%" }}
+            style={{ position: "absolute", left: "25%" }}
           >
             locate boat
           </Button>
@@ -806,9 +822,19 @@ class GraphMap extends React.Component {
             onClick={this.go.bind(this)}
             variant="contained"
             color="primary"
-            style={{ position: "absolute", left: "60%" }}
+            style={{ position: "absolute", left: "50%" }}
           >
             Go
+          </Button>
+        )}
+        {mode === "boat" && (
+          <Button
+            onClick={this.sample.bind(this)}
+            variant="contained"
+            color="primary"
+            style={{ position: "absolute", left: "75%" }}
+          >
+            Sample
           </Button>
         )}
       </>
