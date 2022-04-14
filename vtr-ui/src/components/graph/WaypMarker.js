@@ -2,13 +2,18 @@ import React from "react";
 import {Marker, Tooltip, Popup} from 'react-leaflet';
 import L, { icon, LatLng } from "leaflet";
 import pinSvg from '../../images/pin-icon.svg'
+import circleSvg from '../../images/Red_circle.svg'
 
 const pinIcon = new L.Icon({
     iconUrl: pinSvg,
     iconSize: new L.Point(49, 50),
     iconAnchor: [24, 49]
   });
-  
+
+  const circleIcon = new L.Icon({
+    iconUrl: circleSvg,
+    iconSize: new L.Point(49, 50),
+  });
   
 class WaypMarker extends React.Component{
     //props it needs: gps, index of this wayp, socket, socketconnected
@@ -27,7 +32,7 @@ class WaypMarker extends React.Component{
                 id={this.props.id}
                 draggable={true}
                 ondragend={this._onDragend.bind(this)}
-                icon={pinIcon}
+                icon={circleIcon}
                 zIndexOffset={1500}
                 oncontextmenu={this.props.oncontext}
             >
