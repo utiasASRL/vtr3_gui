@@ -1996,6 +1996,7 @@ class GraphMap extends React.Component {
     let angle_mag_north =
       Math.atan2(latlngtheta.orientation[1], latlngtheta.orientation[0]) *
       (180 / Math.PI);
+    let angle_abs_east = latlngtheta.orientation[0];
     let declination = 0; // diff between the magnetic and geographic north
     fetch(
       "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination" +
@@ -2011,7 +2012,7 @@ class GraphMap extends React.Component {
           text.replace(/^#.*$/gm, "").trim().split(",")[4]
         );
       });
-    return angle_mag_north + declination - 90;
+    return angle_abs_east;
   }
 
   /**
