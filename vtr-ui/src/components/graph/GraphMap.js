@@ -633,7 +633,7 @@ class GraphMap extends React.Component {
             justifyContent="space-around"
           >
             <Box
-              width="48%"
+              width="58%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
@@ -757,7 +757,7 @@ class GraphMap extends React.Component {
               </LeafletMap>
             </Box>
             <Box
-              width="48%"
+              width="38%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
@@ -803,6 +803,35 @@ class GraphMap extends React.Component {
                 </LayersControl>
                 <ZoomControl position="bottomright" />
               </LeafletMap> */}
+              <h3 height="10%">Settings</h3>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-around">
+                <Box
+                  width="48%"
+                  display="flex"
+                // flexDirection="column"
+                // alignItems="flex-start"
+                >
+                  <h2>Boat Information</h2>
+                  <br />
+                  <h3>Boat Velocity</h3>
+                  <br />
+                  <h3>Battery Level</h3>
+                </Box>
+                <Box
+                  width="48%"
+                  display="flex"
+                // flexDirection="column"
+                // alignItems="flex-start"
+                >
+                  <br />
+                  <p>p Text 2</p>
+                  <br />
+                  <p>p Text 3</p>
+                </Box>
+              </Box>
             </Box>
           </Box>
         )}
@@ -813,7 +842,7 @@ class GraphMap extends React.Component {
             color="primary"
             style={{ position: "absolute", left: "25%" }}
           >
-            locate boat
+            Locate Boat
           </Button>
         )}
         {mode === "boat" && (
