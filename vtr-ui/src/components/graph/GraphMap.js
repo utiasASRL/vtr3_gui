@@ -293,7 +293,7 @@ class GraphMap extends React.Component {
     // this.mapEs.panTo(location);
     // this.mapGr.panTo(location);
   }
-  
+
   sample() {
     let cb = (success) => {
       if (success) {
@@ -638,7 +638,7 @@ class GraphMap extends React.Component {
               flexDirection="column"
               alignItems="flex-start"
             >
-              <h3 height="10%">Estimation</h3>
+              <h3 height="10%">Boat Tracking and Policy Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -762,7 +762,7 @@ class GraphMap extends React.Component {
               flexDirection="column"
               alignItems="flex-start"
             >
-              <h3 height="10%">Ground Truth</h3>
+              {/* <h3 height="10%">Ground Truth</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapGr}
@@ -779,7 +779,6 @@ class GraphMap extends React.Component {
               >
                 <LayersControl>
                   <LayersControl.BaseLayer name="Map" checked>
-                    {/* leaflet map tiles */}
                     <TileLayer
                       maxNativeZoom={20}
                       maxZoom={22}
@@ -803,7 +802,7 @@ class GraphMap extends React.Component {
                   </LayersControl.Overlay>
                 </LayersControl>
                 <ZoomControl position="bottomright" />
-              </LeafletMap>
+              </LeafletMap> */}
             </Box>
           </Box>
         )}
@@ -1319,8 +1318,8 @@ class GraphMap extends React.Component {
         mergePath.length < 2
           ? 0 // No enough vertices to calculate angle
           : key === "s"
-          ? getRotationAngle(mergePath[1], mergePath[0])
-          : getRotationAngle(
+            ? getRotationAngle(mergePath[1], mergePath[0])
+            : getRotationAngle(
               mergePath[mergePath.length - 1],
               mergePath[mergePath.length - 2]
             );
@@ -1397,9 +1396,9 @@ class GraphMap extends React.Component {
       rotationAngle:
         mergePath.length > 1
           ? getRotationAngle(
-              mergePath[mergePath.length - 1],
-              mergePath[mergePath.length - 2]
-            )
+            mergePath[mergePath.length - 1],
+            mergePath[mergePath.length - 2]
+          )
           : 0,
     });
     this.mergeMarker.e.on("drag", (e) => handleDrag(e, "e"));
@@ -2000,11 +1999,11 @@ class GraphMap extends React.Component {
     let declination = 0; // diff between the magnetic and geographic north
     fetch(
       "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination" +
-        "?lat1=" +
-        latlngtheta.latitude +
-        "&lon1=" +
-        latlngtheta.longitude +
-        "&resultFormat=csv"
+      "?lat1=" +
+      latlngtheta.latitude +
+      "&lon1=" +
+      latlngtheta.longitude +
+      "&resultFormat=csv"
     )
       .then((response) => response.text())
       .then((text) => {
