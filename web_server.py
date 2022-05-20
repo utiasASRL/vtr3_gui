@@ -1,18 +1,4 @@
-#!/usr/bin/env python3
-
-# Copyright 2021, Autonomous Space Robotics Lab (ASRL)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#!/usr/bin/env python
 
 import io
 import os
@@ -49,13 +35,16 @@ except:
 UI_ADDRESS = '0.0.0.0'
 UI_PORT = 5200
 
-logger = logging.getLogger('WebServer')
+logging.basicConfig(level=logging.WARNING)
+
+log = logging.getLogger('WebServer')
+log.setLevel(logging.INFO)
 
 app = flask.Flask(__name__,
                   static_folder="vtr-ui/build",
                   template_folder="vtr-ui/build",
                   static_url_path="")
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 app.config['CACHE'] = True
 app.config['CACHE_PATH'] = osp.abspath(osp.join(osp.dirname(__file__), 'cache'))
 app.config['PROTO_PATH'] = osp.abspath(osp.dirname(__file__))
@@ -92,48 +81,45 @@ def tile_cache(s, x, y, z):
   fpath = osp.join(fdir, fname)
 
   if app.config['CACHE'] and osp.isfile(fpath):
-    logger.debug("Using cached tile {%s,%s,%s}", x, y, z)
+    log.debug("Using cached tile {%s,%s,%s}", x, y, z)
     return flask.send_from_directory(fdir, fname, max_age=60 * 60 * 24 * 30)
-
+  # elif not app.config['OFFLINE']:
   headers = {
       'Accept': 'image/webp,image/*,*/*;q=0.8',
       'User-Agent': flask.request.user_agent.string
   }
   # url = 'https://khms' + s + '.googleapis.com/kh?v=199&hl=en-GB&x=' + x + '&y=' + y + '&z=' + z
-  # Google Map service
-  # url = 'http://mt1.google.com/vt/lyrs=y&x=' + x + '&y=' + y + '&z=' + z
-  # Open Street Map (mapnik) service
-  url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'.format(
-      z=z, y=y, x=x)
+  url = 'http://mt1.google.com/vt/lyrs=y&x=' + x + '&y=' + y + '&z=' + z
 
   try:
     res = requests.get(url, headers=headers, verify=False)
   except RequestException as e:
-    logger.error('Error loading tile {%s,%s,%s}: %s', x, y, z, e)
+    log.error('Error loading tile {%s,%s,%s}: %s', x, y, z, e)
     flask.abort(500)
 
   if res.ok:
     try:
       sio = io.BytesIO(res.content)
       if app.config['CACHE']:
-        logger.debug("Caching tile: {%s,%s,%s}", x, y, z)
+        log.debug("Caching tile: {%s,%s,%s}", x, y, z)
         os.makedirs(fdir, exist_ok=True)
         img = Image.open(sio)
         img.save(fpath)
       else:
-        logger.debug("Proxying tile: {%s,%s,%s}", x, y, z)
+        log.debug("Proxying tile: {%s,%s,%s}", x, y, z)
 
       sio.seek(0)
       return flask.send_file(sio,
                              mimetype='image/jpeg',
                              max_age=60 * 60 * 24 * 30)
     except Exception as e:
-      logger.error('Something went really sideways on tile {%s,%s,%s}: %s', x,
-                   y, z, e)
+      log.error('Something went really sideways on tile {%s,%s,%s}: %s', x, y,
+                z, e)
       flask.abort(500)
   else:
-    logger.warning("Tile {%s,%s,%s} did not exist on server", x, y, z)
+    log.warning("Tile {%s,%s,%s} did not exist on server", x, y, z)
 
+  log.debug("Tile {%s,%s,%s} not in offline cache", x, y, z)
   flask.abort(404)
 
 
@@ -143,7 +129,6 @@ def tile_cache(s, x, y, z):
 @app.route('/api/map/<seq>')
 def get_map(seq):
   """API endpoint to get the full map"""
-  logger.info("Fetching graph with sequence number: {}".format(seq))
   graph = utils.get_graph(node, seq)
 
   proto_graph = graph_pb2.Graph()
@@ -236,13 +221,7 @@ def get_goals():
 
 
 def main():
-  logger.setLevel(logging.INFO)
-  hd = logging.StreamHandler()
-  fm = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-  hd.setFormatter(fm)
-  logger.addHandler(hd)
-
-  logger.info("Launching the web server.")
+  log.info("Launching the web server.")
 
   # TODO: Server runs on all interfaces. Can we assume a trusted network?
   app.run(threaded=True, host=UI_ADDRESS, port=UI_PORT, use_reloader=False)

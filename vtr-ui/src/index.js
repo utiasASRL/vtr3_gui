@@ -1,20 +1,3 @@
-/**
- * Copyright 2021, Autonomous Space Robotics Lab (ASRL)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 import io from "socket.io-client";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -28,7 +11,7 @@ import GraphMap from "./components/graph/GraphMap";
 import GoalManager from "./components/goal/GoalManager";
 import ToolsMenu from "./components/menu/Toolsmenu";
 import GraphPins from "./components/menu/GraphPins";
-
+import ViewWaypoints from "./components/graph/ViewWaypoints";
 // SocketIO port is assumed to be UI port+1: (Number(window.location.port) + 1)
 const socket = io(window.location.hostname + ":5201");
 
@@ -153,6 +136,8 @@ class VTRUI extends React.Component {
               selectTool={this._selectTool.bind(this)}
               toolsState={toolsState}
             ></ToolsMenu>
+            {/*Might need this later, keeping it for now*/}
+            {mode === "none" && <ViewWaypoints></ViewWaypoints>}
             {/* VTR only: a panel that manage teach and repeat goals.*/}
             {mode === "vtr" && (
               <GoalManager

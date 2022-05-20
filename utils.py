@@ -1,23 +1,13 @@
-# Copyright 2021, Autonomous Space Robotics Lab (ASRL)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+import logging
 import threading
 
 import rclpy
 from geometry_msgs.msg import Pose2D
 from vtr_messages.msg import GraphPin
 from vtr_messages.srv import GraphRelaxation, GraphCalibration, GraphPinning
+
+log = logging.getLogger()
+log.setLevel(logging.INFO)
 
 # A thread lock for ROS to avoid synchronization issues
 ros_rlock = threading.RLock()
@@ -36,6 +26,8 @@ def ros_service_request(node, path, mtype, request):
 
 def get_graph(node, seq):
   """Get the relaxed pose graph from the map server"""
+  log.info("Fetching graph with sequence number: {}".format(seq))
+
   request = GraphRelaxation.Request()
   request.seq = int(seq)
   request.update_graph = False  # TODO not used?
@@ -45,6 +37,8 @@ def get_graph(node, seq):
 
 def move_graph(node, x, y, theta, scale):
   """Update lat lng of the pose graph shown on map"""
+  logging.info("Calling update_calib service.")
+
   request = GraphCalibration.Request()
   request.t_delta = Pose2D(x=x, y=y, theta=theta)
   request.scale_delta = scale
@@ -53,6 +47,8 @@ def move_graph(node, x, y, theta, scale):
 
 def pin_graph(node, pins):
   """Add vertex to latlng correspondence pins"""
+  logging.info("Calling pin_graph service.")
+
   request = GraphPinning.Request()
   for pin in pins:
     pin_msg = GraphPin()

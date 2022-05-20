@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/plugin-transform-flow-strip-types": "^7.14.5",
+    "@babel/preset-flow": "^7.14.5",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.11.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.0.4",
     "@testing-library/user-event": "^12.1.6",
-    "@material-ui/core": "^4.11.0",
-    "@material-ui/icons": "^4.9.1",
     "clsx": "^1.1.1",
+    "flow-bin": "^0.156.0",
     "fontsource-roboto": "^3.0.3",
     "kd-tree-javascript": "^1.0.3",
     "leaflet": "^1.7.1",
@@ -16,18 +20,21 @@
     "protobufjs": "^6.10.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3",
     "react-leaflet": "^2.7.0",
+    "react-leaflet-heatmap-layer": "^2.0.0",
+    "react-scripts": "3.4.3",
     "react-sortable-hoc": "^1.11.0",
     "shortid": "^2.2.15",
     "socket.io": "^3.0.0",
-    "socket.io-client": "^3.0.0"
+    "socket.io-client": "^3.0.0",
+    "typescript": "^4.3.5"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "flow": "flow"
   },
   "eslintConfig": {
     "extends": "react-app"

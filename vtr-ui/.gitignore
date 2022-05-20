@@ -21,10 +21,3 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-__pycache__/
-
-# technically package-lock.json should be committed to avoid user downloading ui
-# dependencies of different versions, we do not commit this file so that we are
-# able to be more up to date.
-package-lock.json
