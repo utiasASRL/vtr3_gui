@@ -803,34 +803,70 @@ class GraphMap extends React.Component {
                 </LayersControl>
                 <ZoomControl position="bottomright" />
               </LeafletMap> */}
-              <h3 height="10%">Settings</h3>
+              <h3 height="10%">Settings and Properties</h3>
+
+              <h2 class="settings-category">Boat Information</h2>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
-                justifyContent="space-around">
-                <Box
-                  width="48%"
-                  display="flex"
-                // flexDirection="column"
-                // alignItems="flex-start"
-                >
-                  <h2>Boat Information</h2>
-                  <br />
-                  <h3>Boat Velocity</h3>
-                  <br />
-                  <h3>Battery Level</h3>
-                </Box>
-                <Box
-                  width="48%"
-                  display="flex"
-                // flexDirection="column"
-                // alignItems="flex-start"
-                >
-                  <br />
-                  <p>p Text 2</p>
-                  <br />
-                  <p>p Text 3</p>
-                </Box>
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Velocity</h3>
+                <p class="settings-item">20 km/h</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Latitude</h3>
+                <p class="settings-item">40.12589°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Longitude</h3>
+                <p class="settings-item">45.98513°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Battery Level</h3>
+                <p class="settings-item">99%</p>
+              </Box>
+
+              <h2 class="settings-category">Visualization</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Show Water Mask</h3>
+                <input class="settings-item" type="checkbox" />
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="50%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Show Global Path</h3>
+                <input class="settings-item" type="checkbox" />
               </Box>
             </Box>
           </Box>

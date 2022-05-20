@@ -15,12 +15,12 @@ class ModeSelector extends React.Component {
     super(props);
 
     this.modes = {
-      vtr: "Visual Teach & Repeat",
       boat: "Boat Project",
+      vtr: "Visual Teach & Repeat",
       none: "None",
     };
 
-    this.state = { selectedMode: "vtr" };
+    this.state = { selectedMode: "boat" };
   }
 
   render() {
@@ -38,8 +38,8 @@ class ModeSelector extends React.Component {
             value={selectedMode}
             onChange={(e) => this.setState({ selectedMode: e.target.value })}
           >
-            <MenuItem value={"vtr"}>{this.modes.vtr}</MenuItem>
             <MenuItem value={"boat"}>{this.modes.boat}</MenuItem>
+            <MenuItem value={"vtr"}>{this.modes.vtr}</MenuItem>
             <MenuItem value={"none"}>{this.modes.none}</MenuItem>
           </Select>
         </FormControl>
