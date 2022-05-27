@@ -192,7 +192,7 @@ class GraphMap extends React.Component {
       showMenu: false,
       menuPos: [0, 0],
       selectedMarkerID: 0,
-      robotloc: null,
+      robotloc: [0, 0],  // USED TO BE NULL, SET DEFAULT VALUE TO AVOID ERROR
       robotangle: 0,
       pastpath: [],
       futurepath: [],
@@ -360,6 +360,20 @@ class GraphMap extends React.Component {
       this.props.socket.off("status", this._updateWaypoint.bind(this));
       this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
     }
+  }
+
+  // TOGGLE SETTINGS ===============================================================
+  toggleWaterMask(e) {
+    console.log("toggle water mask");
+    console.log(e.target.checked);
+    console.log(this.state.robotloc)
+  }
+
+  toggleGlobalPath(e) {
+    console.log("toggle global path");
+    console.log(e.target.checked);
+    console.log(this.state.robotloc[0])
+    console.log(this.state.robotloc[1])
   }
 
   render() {
@@ -810,7 +824,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
@@ -820,27 +834,27 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Latitude</h3>
-                <p class="settings-item">40.12589°</p>
+                <p class="settings-item">{this.state.robotloc[0].toFixed(10)}°</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Longitude</h3>
-                <p class="settings-item">45.98513°</p>
+                <p class="settings-item">{this.state.robotloc[1].toFixed(10)}°</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Battery Level</h3>
@@ -852,21 +866,23 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Show Water Mask</h3>
-                <input class="settings-item" type="checkbox" />
+                <div class="color-picker" id="water-mask-color" />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="50%"
+                width="70%"
                 alignItems="center"
               >
                 <h3 class="settings-item">Show Global Path</h3>
-                <input class="settings-item" type="checkbox" />
+                <div class="color-picker" id="global-path-color" />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
               </Box>
             </Box>
           </Box>
@@ -1168,6 +1184,10 @@ class GraphMap extends React.Component {
         robotLocation: latlng,
         robotOrientation: theta,
       };
+
+      console.log("line 1186");
+      console.log(robotPose.robotLocation);
+
       // Target pose
       if (state.targetVertex === null) return robotPose;
       /// The old, not very accurate way of computing lat, lng, theta

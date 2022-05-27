@@ -44,3 +44,19 @@ body {
   padding: 0;
   position: absolute;
 }
+
+/* BOAT VISUALIZATION */
+.color-picker {
+  border: 1px black solid;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+}
+
+#water-mask-color {
+  background-color: blue;
+}
+
+#global-path-color {
+  background-color: magenta;
+}
