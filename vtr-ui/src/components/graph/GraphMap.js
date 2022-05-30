@@ -857,6 +857,16 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
+                <h3 class="settings-item">Angle</h3>
+                <p class="settings-item">{-this.state.robotangle.toFixed(10)}°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
                 <h3 class="settings-item">Battery Level</h3>
                 <p class="settings-item">99%</p>
               </Box>
