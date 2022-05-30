@@ -894,39 +894,48 @@ class GraphMap extends React.Component {
                 <div class="color-picker" id="global-path-color" />
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
               </Box>
+
+              <h2 class="settings-category">Actions</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.focus.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Locate
+                  </Button>
+                )}
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.go.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Go
+                  </Button>
+                )}
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.sample.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  // style={{ position: "absolute", left: "75%" }}
+                  >
+                    Sample
+                  </Button>
+                )}
+              </Box>
             </Box>
           </Box>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.focus.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "25%" }}
-          >
-            Locate Boat
-          </Button>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.go.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "50%" }}
-          >
-            Go
-          </Button>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.sample.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "75%" }}
-          >
-            Sample
-          </Button>
-        )}
+        )
+        }
       </>
     );
   }
