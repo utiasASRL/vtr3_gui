@@ -194,6 +194,9 @@ class GraphMap extends React.Component {
       selectedMarkerID: 0,
       robotloc: [0, 0],  // USED TO BE NULL, SET DEFAULT VALUE TO AVOID ERROR
       robotangle: 0,
+      robotvelocity: 20,
+      robotbattery: 100,
+      batteryColor: "black",
       pastpath: [],
       futurepath: [],
     };
@@ -828,7 +831,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
-                <p class="settings-item">20 km/h</p>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(10)} km/h</p>
               </Box>
               <Box
                 display={"flex"}
@@ -868,7 +871,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Battery Level</h3>
-                <p class="settings-item">99%</p>
+                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery}%</p>
               </Box>
 
               <h2 class="settings-category">Visualization</h2>
@@ -2125,6 +2128,19 @@ class GraphMap extends React.Component {
 
   _updateRobotLocation(latlngtheta) {
     //save this new location to the past path
+
+    var newbat = this.state.robotbattery - 5;
+    if (newbat < 0)
+      newbat = 100;
+
+    var batcol = "black";
+    if (this.state.robotbattery <= 33)
+      batcol = "red";
+    else if (this.state.robotbattery <= 66)
+      batcol = "darkorange";
+    else
+      batcol = "green";
+
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
@@ -2136,6 +2152,8 @@ class GraphMap extends React.Component {
         robotangle: this._robotOrientation(latlngtheta),
         pastpath: path,
         futurepath: future,
+        batteryColor: batcol,
+        robotbattery: newbat
       };
     });
   }
