@@ -324,8 +324,10 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.on("status", this._updateWaypoint.bind(this));
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
+      // this.props.socket.on("robot/props", this._updateRobotProperties.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
+      this._updateRobotProperties();
     }
   }
 
@@ -362,6 +364,7 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.off("status", this._updateWaypoint.bind(this));
       this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
+      // this.props.socket.off("robot/props", this._updateRobotProperties.bind(this));
     }
   }
 
@@ -2128,18 +2131,7 @@ class GraphMap extends React.Component {
 
   _updateRobotLocation(latlngtheta) {
     //save this new location to the past path
-
-    var newbat = this.state.robotbattery - 0.5;
-    if (newbat < 9)
-      newbat = 15;
-
-    var batcol = "black";
-    if (this.state.robotbattery <= 12)
-      batcol = "red";
-    else if (this.state.robotbattery <= 14)
-      batcol = "darkorange";
-    else
-      batcol = "green";
+    this._updateRobotProperties();
 
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
@@ -2152,10 +2144,59 @@ class GraphMap extends React.Component {
         robotangle: this._robotOrientation(latlngtheta),
         pastpath: path,
         futurepath: future,
-        batteryColor: batcol,
-        robotbattery: newbat
+        // batteryColor: batcol,
+        // robotbattery: newbat
       };
     });
+  }
+
+  _updateRobotProperties() {
+    let cb = (success, robotVel) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            robotvelocity: robotVel["vx"],
+          };
+        });
+        console.log("Initial robot velocity loaded successfully: see below");
+        console.log(robotVel);
+        console.log("ended")
+      } else {
+        alert(`Loading initial robot velocity failed: ${robotVel}`);
+      }
+    };
+
+    this.setState((state, props) => {
+      console.log("Loading robot velocity...");
+      if (props.socketConnected) {
+        props.socket.emit("robot/props", cb.bind(this));
+      } else {
+        alert(
+          `Cannot load robot velocity! Socket not connected.\nTry again later!`
+        );
+      }
+    });
+
+    // console.log(proparg);
+
+    // var newbat = this.state.robotbattery - 0.5;
+    // if (newbat < 9)
+    //   newbat = 15;
+
+    // var batcol = "black";
+    // if (this.state.robotbattery <= 12)
+    //   batcol = "red";
+    // else if (this.state.robotbattery <= 14)
+    //   batcol = "darkorange";
+    // else
+    //   batcol = "green";
+
+    // this.setState(() => {
+    //   return {
+    //     batteryColor: batcol,
+    //     robotbattery: newbat
+    //   };
+    // });
   }
 
   /**
