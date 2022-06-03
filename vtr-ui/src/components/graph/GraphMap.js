@@ -194,6 +194,9 @@ class GraphMap extends React.Component {
       selectedMarkerID: 0,
       robotloc: [0, 0],  // USED TO BE NULL, SET DEFAULT VALUE TO AVOID ERROR
       robotangle: 0,
+      robotvelx: 0,
+      robotvely: 0,
+      robotvelz: 0,
       robotvelocity: 0,
       robotbattery: 0,
       batteryColor: "black",
@@ -326,6 +329,7 @@ class GraphMap extends React.Component {
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
+      this._updateRobotVelocity();
     }
   }
 
@@ -779,47 +783,6 @@ class GraphMap extends React.Component {
               flexDirection="column"
               alignItems="flex-start"
             >
-              {/* <h3 height="10%">Ground Truth</h3>
-              <LeafletMap
-                className="leaflet-container-boat"
-                ref={this.setMapGr}
-                bounds={[
-                  [lowerBound.lat, lowerBound.lng],
-                  [upperBound.lat, upperBound.lng],
-                ]}
-                center={mapCenter}
-                zoomControl={false}
-                onzoomend={this._onZoomEndGr.bind(this)}
-                ondragend={this._onDragEndGr.bind(this)}
-                touchZoom={true}
-                doubleClickZoom={false}
-              >
-                <LayersControl>
-                  <LayersControl.BaseLayer name="Map" checked>
-                    <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
-                    />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.Overlay name="Ground Truth" checked>
-                    <FeatureGroup color="purple">
-                      <HeatmapLayer
-                        fitBoundsOnLoad={false}
-                        fitBoundsOnUpdate={false}
-                        points={addressPoints}
-                        longitudeExtractor={(m) => m[1]}
-                        latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
-                      />
-                    </FeatureGroup>
-                  </LayersControl.Overlay>
-                </LayersControl>
-                <ZoomControl position="bottomright" />
-              </LeafletMap> */}
               <h3 height="10%">Settings and Properties</h3>
 
               <h2 class="settings-category">Boat Information</h2>
@@ -831,7 +794,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
-                <p class="settings-item">{this.state.robotvelocity.toFixed(10)} m/s</p>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(8)} m/s</p>
               </Box>
               <Box
                 display={"flex"}
@@ -2127,20 +2090,9 @@ class GraphMap extends React.Component {
    */
 
   _updateRobotLocation(latlngtheta) {
+    this._updateRobotVelocity();  // hacky way to update
+
     //save this new location to the past path
-
-    var newbat = this.state.robotbattery - 0.5;
-    if (newbat < 9)
-      newbat = 15;
-
-    var batcol = "black";
-    if (this.state.robotbattery <= 12)
-      batcol = "red";
-    else if (this.state.robotbattery <= 14)
-      batcol = "darkorange";
-    else
-      batcol = "green";
-
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
@@ -2152,10 +2104,60 @@ class GraphMap extends React.Component {
         robotangle: this._robotOrientation(latlngtheta),
         pastpath: path,
         futurepath: future,
-        batteryColor: batcol,
-        robotbattery: newbat
+        // batteryColor: batcol,
+        // robotbattery: newbat
       };
     });
+  }
+
+  _updateRobotVelocity() {
+    let cb = (success, robotVel) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            robotvelx: robotVel["vx"],
+            robotvely: robotVel["vy"],
+            robotvelz: robotVel["vz"],
+            robotvelocity: (robotVel["vx"] ** 2 + robotVel["vy"] ** 2 + robotVel["vz"] ** 2) ** 0.5,
+          };
+        });
+        // console.log("Robot velocity updated successfully");
+      } else {
+        console.log('Updating robot velocity failed: ${robotVel}');
+      }
+    };
+
+    this.setState((state, props) => {
+      // console.log("Updating robot velocity...");
+      if (props.socketConnected) {
+        props.socket.emit("robot/vel", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update robot velocity! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+
+    // console.log(proparg);
+
+    // var newbat = this.state.robotbattery - 0.5;
+    // if (newbat < 9)
+    //   newbat = 15;
+
+    // var batcol = "black";
+    // if (this.state.robotbattery <= 12)
+    //   batcol = "red";
+    // else if (this.state.robotbattery <= 14)
+    //   batcol = "darkorange";
+    // else
+    //   batcol = "green";
+
+    // this.setState(() => {
+    //   return {
+    //     batteryColor: batcol,
+    //     robotbattery: newbat
+    //   };
+    // });
   }
 
   /**
