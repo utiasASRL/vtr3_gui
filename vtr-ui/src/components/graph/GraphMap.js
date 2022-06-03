@@ -330,6 +330,7 @@ class GraphMap extends React.Component {
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
       this._updateRobotVelocity();
+      this._updateRobotBattery();
     }
   }
 
@@ -794,7 +795,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
-                <p class="settings-item">{this.state.robotvelocity.toFixed(8)} m/s</p>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(2)} m/s</p>
               </Box>
               <Box
                 display={"flex"}
@@ -804,7 +805,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Latitude</h3>
-                <p class="settings-item">{this.state.robotloc[0].toFixed(10)}°</p>
+                <p class="settings-item">{this.state.robotloc[0].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -814,7 +815,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Longitude</h3>
-                <p class="settings-item">{this.state.robotloc[1].toFixed(10)}°</p>
+                <p class="settings-item">{this.state.robotloc[1].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -824,7 +825,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Angle</h3>
-                <p class="settings-item">{-this.state.robotangle.toFixed(10)}°</p>
+                <p class="settings-item">{-this.state.robotangle.toFixed(1)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -834,7 +835,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Battery</h3>
-                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery} V</p>
+                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
               <h2 class="settings-category">Visualization</h2>
@@ -2090,7 +2091,9 @@ class GraphMap extends React.Component {
    */
 
   _updateRobotLocation(latlngtheta) {
-    this._updateRobotVelocity();  // hacky way to update
+    // hacky way to update
+    this._updateRobotVelocity();
+    this._updateRobotBattery();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2104,8 +2107,6 @@ class GraphMap extends React.Component {
         robotangle: this._robotOrientation(latlngtheta),
         pastpath: path,
         futurepath: future,
-        // batteryColor: batcol,
-        // robotbattery: newbat
       };
     });
   }
@@ -2137,27 +2138,42 @@ class GraphMap extends React.Component {
         );
       }
     });
+  }
 
-    // console.log(proparg);
+  _updateRobotBattery() {
+    let cb = (success, robotBat) => {
+      if (success) {
+        // Set text color based on voltage level
+        var batcol = "black";
+        if (robotBat[0] <= 13)
+          batcol = "red";
+        else if (robotBat[0] <= 15)
+          batcol = "darkorange";
+        else
+          batcol = "green";
 
-    // var newbat = this.state.robotbattery - 0.5;
-    // if (newbat < 9)
-    //   newbat = 15;
+        this.setState(() => {
+          return {
+            batteryColor: batcol,
+            robotbattery: robotBat["voltage"],
+          };
+        });
+        // console.log("Robot battery updated successfully");
+      } else {
+        console.log('Updating robot battery failed: ${robotBat}');
+      }
+    };
 
-    // var batcol = "black";
-    // if (this.state.robotbattery <= 12)
-    //   batcol = "red";
-    // else if (this.state.robotbattery <= 14)
-    //   batcol = "darkorange";
-    // else
-    //   batcol = "green";
-
-    // this.setState(() => {
-    //   return {
-    //     batteryColor: batcol,
-    //     robotbattery: newbat
-    //   };
-    // });
+    this.setState((state, props) => {
+      // console.log("Updating robot battery...");
+      if (props.socketConnected) {
+        props.socket.emit("robot/bat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update robot battery! Socket not connected.\nTry again later!'
+        );
+      }
+    });
   }
 
   /**
