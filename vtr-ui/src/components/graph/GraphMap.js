@@ -194,6 +194,9 @@ class GraphMap extends React.Component {
       selectedMarkerID: 0,
       robotloc: [0, 0],  // USED TO BE NULL, SET DEFAULT VALUE TO AVOID ERROR
       robotangle: 0,
+      robotvelx: 0,
+      robotvely: 0,
+      robotvelz: 0,
       robotvelocity: 0,
       robotbattery: 0,
       batteryColor: "black",
@@ -324,10 +327,9 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.on("status", this._updateWaypoint.bind(this));
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
-      // this.props.socket.on("robot/props", this._updateRobotProperties.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
-      this._updateRobotProperties();
+      this._updateRobotVelocity();
     }
   }
 
@@ -364,7 +366,6 @@ class GraphMap extends React.Component {
     if (this.props.mode === "boat") {
       this.props.socket.off("status", this._updateWaypoint.bind(this));
       this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
-      // this.props.socket.off("robot/props", this._updateRobotProperties.bind(this));
     }
   }
 
@@ -782,47 +783,6 @@ class GraphMap extends React.Component {
               flexDirection="column"
               alignItems="flex-start"
             >
-              {/* <h3 height="10%">Ground Truth</h3>
-              <LeafletMap
-                className="leaflet-container-boat"
-                ref={this.setMapGr}
-                bounds={[
-                  [lowerBound.lat, lowerBound.lng],
-                  [upperBound.lat, upperBound.lng],
-                ]}
-                center={mapCenter}
-                zoomControl={false}
-                onzoomend={this._onZoomEndGr.bind(this)}
-                ondragend={this._onDragEndGr.bind(this)}
-                touchZoom={true}
-                doubleClickZoom={false}
-              >
-                <LayersControl>
-                  <LayersControl.BaseLayer name="Map" checked>
-                    <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
-                    />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.Overlay name="Ground Truth" checked>
-                    <FeatureGroup color="purple">
-                      <HeatmapLayer
-                        fitBoundsOnLoad={false}
-                        fitBoundsOnUpdate={false}
-                        points={addressPoints}
-                        longitudeExtractor={(m) => m[1]}
-                        latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
-                      />
-                    </FeatureGroup>
-                  </LayersControl.Overlay>
-                </LayersControl>
-                <ZoomControl position="bottomright" />
-              </LeafletMap> */}
               <h3 height="10%">Settings and Properties</h3>
 
               <h2 class="settings-category">Boat Information</h2>
@@ -834,7 +794,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
-                <p class="settings-item">{this.state.robotvelocity.toFixed(10)} m/s</p>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(8)} m/s</p>
               </Box>
               <Box
                 display={"flex"}
@@ -2130,9 +2090,9 @@ class GraphMap extends React.Component {
    */
 
   _updateRobotLocation(latlngtheta) {
-    //save this new location to the past path
-    this._updateRobotProperties();
+    this._updateRobotVelocity();  // hacky way to update
 
+    //save this new location to the past path
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
       path.push([latlngtheta.latitude, latlngtheta.longitude]);
@@ -2150,29 +2110,30 @@ class GraphMap extends React.Component {
     });
   }
 
-  _updateRobotProperties() {
+  _updateRobotVelocity() {
     let cb = (success, robotVel) => {
       if (success) {
         this.setState(() => {
           return {
-            robotvelocity: robotVel["vx"],
+            robotvelx: robotVel["vx"],
+            robotvely: robotVel["vy"],
+            robotvelz: robotVel["vz"],
+            robotvelocity: (robotVel["vx"] ** 2 + robotVel["vy"] ** 2 + robotVel["vz"] ** 2) ** 0.5,
           };
         });
-        console.log("Initial robot velocity loaded successfully: see below");
-        console.log(robotVel);
-        console.log("ended")
+        // console.log("Robot velocity updated successfully");
       } else {
-        alert(`Loading initial robot velocity failed: ${robotVel}`);
+        console.log('Updating robot velocity failed: ${robotVel}');
       }
     };
 
     this.setState((state, props) => {
-      console.log("Loading robot velocity...");
+      // console.log("Updating robot velocity...");
       if (props.socketConnected) {
-        props.socket.emit("robot/props", cb.bind(this));
+        props.socket.emit("robot/vel", cb.bind(this));
       } else {
-        alert(
-          `Cannot load robot velocity! Socket not connected.\nTry again later!`
+        console.log(
+          'Cannot update robot velocity! Socket not connected.\nTry again later!'
         );
       }
     });
