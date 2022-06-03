@@ -795,7 +795,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Velocity</h3>
-                <p class="settings-item">{this.state.robotvelocity.toFixed(8)} m/s</p>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(2)} m/s</p>
               </Box>
               <Box
                 display={"flex"}
@@ -805,7 +805,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Latitude</h3>
-                <p class="settings-item">{this.state.robotloc[0].toFixed(10)}°</p>
+                <p class="settings-item">{this.state.robotloc[0].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -815,7 +815,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Longitude</h3>
-                <p class="settings-item">{this.state.robotloc[1].toFixed(10)}°</p>
+                <p class="settings-item">{this.state.robotloc[1].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -825,7 +825,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Angle</h3>
-                <p class="settings-item">{-this.state.robotangle.toFixed(10)}°</p>
+                <p class="settings-item">{-this.state.robotangle.toFixed(1)}°</p>
               </Box>
               <Box
                 display={"flex"}
@@ -835,7 +835,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Battery</h3>
-                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(9)} V</p>
+                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
               <h2 class="settings-category">Visualization</h2>
