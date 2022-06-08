@@ -522,7 +522,7 @@ class GraphMap extends React.Component {
                         rotationAngle={robotOrientation}
                         icon={icon({
                           iconUrl: robotIcon,
-                          iconSize: [40, 40],
+                          iconSize: [20, 20],
                         })}
                         opacity={0.85}
                         zIndexOffset={1500}
@@ -757,7 +757,7 @@ class GraphMap extends React.Component {
                     rotationAngle={this.state.robotangle}
                     icon={icon({
                       iconUrl: robotIcon,
-                      iconSize: [40, 40],
+                      iconSize: [20, 20],
                     })}
                     opacity={0.85}
                     zIndexOffset={1600}
@@ -1598,7 +1598,7 @@ class GraphMap extends React.Component {
           zIndexOffset: 2000, // \todo Magic number.
           icon: icon({
             iconUrl: robotIcon,
-            iconSize: [40, 40],
+            iconSize: [20, 20],
           }),
           opacity: poseGraphOpacity,
           rotationAngle: state.robotOrientation,
