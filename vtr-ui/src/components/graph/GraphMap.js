@@ -682,12 +682,12 @@ class GraphMap extends React.Component {
                   <LayersControl.BaseLayer name="Map" checked>
                     {/* leaflet map tiles */}
                     <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
+                      maxNativeZoom={15}
+                      maxZoom={15}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+                      url={"4uMaps/{z}/{x}/{y}.png"}
+                      attribution="© OpenStreetMap contributors, CC-BY-SA"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -2209,14 +2209,12 @@ class GraphMap extends React.Component {
             pcctpstatus: pcctpInfo["text"],
           };
         });
-        console.log("PCCTP status updated successfully");
       } else {
         console.log('Updating PCCTP status failed: ${pcctpInfo}');
       }
     };
 
     this.setState((state, props) => {
-      console.log("Updating PCCTP status...");
       if (props.socketConnected) {
         props.socket.emit("policy/stat", cb.bind(this));
       } else {
