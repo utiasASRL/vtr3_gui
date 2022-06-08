@@ -200,6 +200,7 @@ class GraphMap extends React.Component {
       robotvelocity: 0,
       robotbattery: 0,
       batteryColor: "black",
+      pcctpstatus: "",
       pastpath: [],
       futurepath: [],
     };
@@ -331,6 +332,7 @@ class GraphMap extends React.Component {
       this._loadInitRobotLoc();
       this._updateRobotVelocity();
       this._updateRobotBattery();
+      this._updatePCCTPStatus();
     }
   }
 
@@ -860,6 +862,28 @@ class GraphMap extends React.Component {
                 <h3 class="settings-item">Show Global Path</h3>
                 <div class="color-picker" id="global-path-color" />
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
+              </Box>
+
+              <h2 class="settings-category">Status</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">PCCTP</h3>
+                <p class="settings-item">{this.state.pcctpstatus}</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">GPS</h3>
+                <p class="settings-item">pass</p>
               </Box>
 
               <h2 class="settings-category">Actions</h2>
@@ -2091,9 +2115,10 @@ class GraphMap extends React.Component {
    */
 
   _updateRobotLocation(latlngtheta) {
-    // hacky way to update
+    // hacky way to update other properties
     this._updateRobotVelocity();
     this._updateRobotBattery();
+    this._updatePCCTPStatus();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2171,6 +2196,32 @@ class GraphMap extends React.Component {
       } else {
         console.log(
           'Cannot update robot battery! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updatePCCTPStatus() {
+    let cb = (success, pcctpInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            pcctpstatus: pcctpInfo["text"],
+          };
+        });
+        console.log("PCCTP status updated successfully");
+      } else {
+        console.log('Updating PCCTP status failed: ${pcctpInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      console.log("Updating PCCTP status...");
+      if (props.socketConnected) {
+        props.socket.emit("policy/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update PCCTP status! Socket not connected.\nTry again later!'
         );
       }
     });
