@@ -201,6 +201,7 @@ class GraphMap extends React.Component {
       robotbattery: 0,
       batteryColor: "black",
       pcctpstatus: "",
+      gpsstatus: 0,
       pastpath: [],
       futurepath: [],
     };
@@ -330,9 +331,6 @@ class GraphMap extends React.Component {
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
-      this._updateRobotVelocity();
-      this._updateRobotBattery();
-      this._updatePCCTPStatus();
     }
   }
 
@@ -522,7 +520,7 @@ class GraphMap extends React.Component {
                         rotationAngle={robotOrientation}
                         icon={icon({
                           iconUrl: robotIcon,
-                          iconSize: [20, 20],
+                          iconSize: [30, 30],
                         })}
                         opacity={0.85}
                         zIndexOffset={1500}
@@ -757,7 +755,7 @@ class GraphMap extends React.Component {
                     rotationAngle={this.state.robotangle}
                     icon={icon({
                       iconUrl: robotIcon,
-                      iconSize: [20, 20],
+                      iconSize: [30, 30],
                     })}
                     opacity={0.85}
                     zIndexOffset={1600}
@@ -883,7 +881,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">GPS</h3>
-                <p class="settings-item">pass</p>
+                <p class="settings-item">{this.state.gpsstatus}</p>
               </Box>
 
               <h2 class="settings-category">Actions</h2>
@@ -1598,7 +1596,7 @@ class GraphMap extends React.Component {
           zIndexOffset: 2000, // \todo Magic number.
           icon: icon({
             iconUrl: robotIcon,
-            iconSize: [20, 20],
+            iconSize: [30, 30],
           }),
           opacity: poseGraphOpacity,
           rotationAngle: state.robotOrientation,
@@ -2119,6 +2117,7 @@ class GraphMap extends React.Component {
     this._updateRobotVelocity();
     this._updateRobotBattery();
     this._updatePCCTPStatus();
+    this._updateGPSStatus();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2220,6 +2219,30 @@ class GraphMap extends React.Component {
       } else {
         console.log(
           'Cannot update PCCTP status! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateGPSStatus() {
+    let cb = (success, gpsInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            gpsstatus: gpsInfo["status"],
+          };
+        });
+      } else {
+        console.log('Updating GPS status failed: ${gpsInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("novatel/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update GPS status! Socket not connected.\nTry again later!'
         );
       }
     });
