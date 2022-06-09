@@ -201,6 +201,7 @@ class GraphMap extends React.Component {
       robotbattery: 0,
       batteryColor: "black",
       pcctpstatus: "",
+      gpsstatus: 0,
       pastpath: [],
       futurepath: [],
     };
@@ -330,9 +331,6 @@ class GraphMap extends React.Component {
       this.props.socket.on("robot/loc", this._updateRobotLocation.bind(this));
       this._loadInitWaypoints();
       this._loadInitRobotLoc();
-      this._updateRobotVelocity();
-      this._updateRobotBattery();
-      this._updatePCCTPStatus();
     }
   }
 
@@ -522,7 +520,7 @@ class GraphMap extends React.Component {
                         rotationAngle={robotOrientation}
                         icon={icon({
                           iconUrl: robotIcon,
-                          iconSize: [40, 40],
+                          iconSize: [30, 30],
                         })}
                         opacity={0.85}
                         zIndexOffset={1500}
@@ -682,12 +680,12 @@ class GraphMap extends React.Component {
                   <LayersControl.BaseLayer name="Map" checked>
                     {/* leaflet map tiles */}
                     <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
+                      maxNativeZoom={15}
+                      maxZoom={15}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+                      url={"4uMaps/{z}/{x}/{y}.png"}
+                      attribution="© OpenStreetMap contributors, CC-BY-SA"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -757,7 +755,7 @@ class GraphMap extends React.Component {
                     rotationAngle={this.state.robotangle}
                     icon={icon({
                       iconUrl: robotIcon,
-                      iconSize: [40, 40],
+                      iconSize: [30, 30],
                     })}
                     opacity={0.85}
                     zIndexOffset={1600}
@@ -883,7 +881,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">GPS</h3>
-                <p class="settings-item">pass</p>
+                <p class="settings-item">{this.state.gpsstatus}</p>
               </Box>
 
               <h2 class="settings-category">Actions</h2>
@@ -1598,7 +1596,7 @@ class GraphMap extends React.Component {
           zIndexOffset: 2000, // \todo Magic number.
           icon: icon({
             iconUrl: robotIcon,
-            iconSize: [40, 40],
+            iconSize: [30, 30],
           }),
           opacity: poseGraphOpacity,
           rotationAngle: state.robotOrientation,
@@ -2119,6 +2117,7 @@ class GraphMap extends React.Component {
     this._updateRobotVelocity();
     this._updateRobotBattery();
     this._updatePCCTPStatus();
+    this._updateGPSStatus();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2209,19 +2208,41 @@ class GraphMap extends React.Component {
             pcctpstatus: pcctpInfo["text"],
           };
         });
-        console.log("PCCTP status updated successfully");
       } else {
         console.log('Updating PCCTP status failed: ${pcctpInfo}');
       }
     };
 
     this.setState((state, props) => {
-      console.log("Updating PCCTP status...");
       if (props.socketConnected) {
         props.socket.emit("policy/stat", cb.bind(this));
       } else {
         console.log(
           'Cannot update PCCTP status! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateGPSStatus() {
+    let cb = (success, gpsInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            gpsstatus: gpsInfo["status"],
+          };
+        });
+      } else {
+        console.log('Updating GPS status failed: ${gpsInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("novatel/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update GPS status! Socket not connected.\nTry again later!'
         );
       }
     });
