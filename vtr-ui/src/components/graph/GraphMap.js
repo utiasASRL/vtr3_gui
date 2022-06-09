@@ -192,8 +192,16 @@ class GraphMap extends React.Component {
       showMenu: false,
       menuPos: [0, 0],
       selectedMarkerID: 0,
-      robotloc: null,
+      robotloc: [0, 0],
       robotangle: 0,
+      robotvelx: 0,
+      robotvely: 0,
+      robotvelz: 0,
+      robotvelocity: 0,
+      robotbattery: 0,
+      batteryColor: "black",
+      pcctpstatus: "",
+      gpsstatus: 0,
       pastpath: [],
       futurepath: [],
     };
@@ -293,7 +301,7 @@ class GraphMap extends React.Component {
     // this.mapEs.panTo(location);
     // this.mapGr.panTo(location);
   }
-  
+
   sample() {
     let cb = (success) => {
       if (success) {
@@ -360,6 +368,20 @@ class GraphMap extends React.Component {
       this.props.socket.off("status", this._updateWaypoint.bind(this));
       this.props.socket.off("robot/loc", this._updateRobotLocation.bind(this));
     }
+  }
+
+  // TOGGLE SETTINGS ===============================================================
+  toggleWaterMask(e) {
+    console.log("toggle water mask");
+    console.log(e.target.checked);
+    console.log(this.state.robotloc)
+  }
+
+  toggleGlobalPath(e) {
+    console.log("toggle global path");
+    console.log(e.target.checked);
+    console.log(this.state.robotloc[0])
+    console.log(this.state.robotloc[1])
   }
 
   render() {
@@ -498,7 +520,7 @@ class GraphMap extends React.Component {
                         rotationAngle={robotOrientation}
                         icon={icon({
                           iconUrl: robotIcon,
-                          iconSize: [40, 40],
+                          iconSize: [30, 30],
                         })}
                         opacity={0.85}
                         zIndexOffset={1500}
@@ -633,12 +655,13 @@ class GraphMap extends React.Component {
             justifyContent="space-around"
           >
             <Box
-              width="48%"
+              width="58%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
             >
-              <h3 height="10%">Estimation</h3>
+
+              <h3 height="10%">Boat Tracking and Policy Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -658,12 +681,12 @@ class GraphMap extends React.Component {
                   <LayersControl.BaseLayer name="Map" checked>
                     {/* leaflet map tiles */}
                     <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
+                      maxNativeZoom={15}
+                      maxZoom={15}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+                      url={"4uMaps/{z}/{x}/{y}.png"}
+                      attribution="© OpenStreetMap contributors, CC-BY-SA"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -733,7 +756,7 @@ class GraphMap extends React.Component {
                     rotationAngle={this.state.robotangle}
                     icon={icon({
                       iconUrl: robotIcon,
-                      iconSize: [40, 40],
+                      iconSize: [30, 30],
                     })}
                     opacity={0.85}
                     zIndexOffset={1600}
@@ -757,86 +780,152 @@ class GraphMap extends React.Component {
               </LeafletMap>
             </Box>
             <Box
-              width="48%"
+              width="38%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
             >
-              <h3 height="10%">Ground Truth</h3>
-              <LeafletMap
-                className="leaflet-container-boat"
-                ref={this.setMapGr}
-                bounds={[
-                  [lowerBound.lat, lowerBound.lng],
-                  [upperBound.lat, upperBound.lng],
-                ]}
-                center={mapCenter}
-                zoomControl={false}
-                onzoomend={this._onZoomEndGr.bind(this)}
-                ondragend={this._onDragEndGr.bind(this)}
-                touchZoom={true}
-                doubleClickZoom={false}
+              <h3 height="10%">Settings and Properties</h3>
+
+              <h2 class="settings-category">Boat Information</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
               >
-                <LayersControl>
-                  <LayersControl.BaseLayer name="Map" checked>
-                    {/* leaflet map tiles */}
-                    <TileLayer
-                      maxNativeZoom={20}
-                      maxZoom={22}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"}
-                      attribution="Imagery @2021 TerraMetrics, Map data @2021 INEGI"
-                    />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.Overlay name="Ground Truth" checked>
-                    <FeatureGroup color="purple">
-                      <HeatmapLayer
-                        fitBoundsOnLoad={false}
-                        fitBoundsOnUpdate={false}
-                        points={addressPoints}
-                        longitudeExtractor={(m) => m[1]}
-                        latitudeExtractor={(m) => m[0]}
-                        intensityExtractor={(m) => parseFloat(m[2])}
-                      />
-                    </FeatureGroup>
-                  </LayersControl.Overlay>
-                </LayersControl>
-                <ZoomControl position="bottomright" />
-              </LeafletMap>
+                <h3 class="settings-item">Velocity</h3>
+                <p class="settings-item">{this.state.robotvelocity.toFixed(2)} m/s</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Latitude</h3>
+                <p class="settings-item">{this.state.robotloc[0].toFixed(6)}°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Longitude</h3>
+                <p class="settings-item">{this.state.robotloc[1].toFixed(6)}°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Angle</h3>
+                <p class="settings-item">{-this.state.robotangle.toFixed(1)}°</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Battery</h3>
+                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(1)} V</p>
+              </Box>
+
+              <h2 class="settings-category">Visualization</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Show Water Mask</h3>
+                <div class="color-picker" id="water-mask-color" />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Show Global Path</h3>
+                <div class="color-picker" id="global-path-color" />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
+              </Box>
+
+              <h2 class="settings-category">Status</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">PCCTP</h3>
+                <p class="settings-item">{this.state.pcctpstatus}</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">GPS</h3>
+                <p class="settings-item">{this.state.gpsstatus}</p>
+              </Box>
+
+              <h2 class="settings-category">Actions</h2>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.focus.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Locate
+                  </Button>
+                )}
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.go.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Go
+                  </Button>
+                )}
+                {mode === "boat" && (
+                  <Button
+                    onClick={this.sample.bind(this)}
+                    variant="contained"
+                    color="primary"
+                  // style={{ position: "absolute", left: "75%" }}
+                  >
+                    Sample
+                  </Button>
+                )}
+              </Box>
             </Box>
           </Box>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.focus.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "25%" }}
-          >
-            locate boat
-          </Button>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.go.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "50%" }}
-          >
-            Go
-          </Button>
-        )}
-        {mode === "boat" && (
-          <Button
-            onClick={this.sample.bind(this)}
-            variant="contained"
-            color="primary"
-            style={{ position: "absolute", left: "75%" }}
-          >
-            Sample
-          </Button>
-        )}
+        )
+        }
       </>
     );
   }
@@ -1104,6 +1193,10 @@ class GraphMap extends React.Component {
         robotLocation: latlng,
         robotOrientation: theta,
       };
+
+      console.log("line 1186");
+      console.log(robotPose.robotLocation);
+
       // Target pose
       if (state.targetVertex === null) return robotPose;
       /// The old, not very accurate way of computing lat, lng, theta
@@ -1319,8 +1412,8 @@ class GraphMap extends React.Component {
         mergePath.length < 2
           ? 0 // No enough vertices to calculate angle
           : key === "s"
-          ? getRotationAngle(mergePath[1], mergePath[0])
-          : getRotationAngle(
+            ? getRotationAngle(mergePath[1], mergePath[0])
+            : getRotationAngle(
               mergePath[mergePath.length - 1],
               mergePath[mergePath.length - 2]
             );
@@ -1397,9 +1490,9 @@ class GraphMap extends React.Component {
       rotationAngle:
         mergePath.length > 1
           ? getRotationAngle(
-              mergePath[mergePath.length - 1],
-              mergePath[mergePath.length - 2]
-            )
+            mergePath[mergePath.length - 1],
+            mergePath[mergePath.length - 2]
+          )
           : 0,
     });
     this.mergeMarker.e.on("drag", (e) => handleDrag(e, "e"));
@@ -1504,7 +1597,7 @@ class GraphMap extends React.Component {
           zIndexOffset: 2000, // \todo Magic number.
           icon: icon({
             iconUrl: robotIcon,
-            iconSize: [40, 40],
+            iconSize: [30, 30],
           }),
           opacity: poseGraphOpacity,
           rotationAngle: state.robotOrientation,
@@ -2000,11 +2093,11 @@ class GraphMap extends React.Component {
     let declination = 0; // diff between the magnetic and geographic north
     fetch(
       "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination" +
-        "?lat1=" +
-        latlngtheta.latitude +
-        "&lon1=" +
-        latlngtheta.longitude +
-        "&resultFormat=csv"
+      "?lat1=" +
+      latlngtheta.latitude +
+      "&lon1=" +
+      latlngtheta.longitude +
+      "&resultFormat=csv"
     )
       .then((response) => response.text())
       .then((text) => {
@@ -2021,6 +2114,12 @@ class GraphMap extends React.Component {
    */
 
   _updateRobotLocation(latlngtheta) {
+    // hacky way to update other properties
+    this._updateRobotVelocity();
+    this._updateRobotBattery();
+    this._updatePCCTPStatus();
+    this._updateGPSStatus();
+
     //save this new location to the past path
     this.setState((prevstate) => {
       let path = prevstate.pastpath.slice();
@@ -2037,6 +2136,118 @@ class GraphMap extends React.Component {
     });
   }
 
+  _updateRobotVelocity() {
+    let cb = (success, robotVel) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            robotvelx: robotVel["vx"],
+            robotvely: robotVel["vy"],
+            robotvelz: robotVel["vz"],
+            robotvelocity: (robotVel["vx"] ** 2 + robotVel["vy"] ** 2 + robotVel["vz"] ** 2) ** 0.5,
+          };
+        });
+        // console.log("Robot velocity updated successfully");
+      } else {
+        console.log('Updating robot velocity failed: ${robotVel}');
+      }
+    };
+
+    this.setState((state, props) => {
+      // console.log("Updating robot velocity...");
+      if (props.socketConnected) {
+        props.socket.emit("robot/vel", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update robot velocity! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateRobotBattery() {
+    let cb = (success, robotBat) => {
+      if (success) {
+        // Set text color based on voltage level
+        var batcol = "black";
+        if (robotBat[0] <= 13)
+          batcol = "red";
+        else if (robotBat[0] <= 15)
+          batcol = "darkorange";
+        else
+          batcol = "green";
+
+        this.setState(() => {
+          return {
+            batteryColor: batcol,
+            robotbattery: robotBat["voltage"],
+          };
+        });
+        // console.log("Robot battery updated successfully");
+      } else {
+        console.log('Updating robot battery failed: ${robotBat}');
+      }
+    };
+
+    this.setState((state, props) => {
+      // console.log("Updating robot battery...");
+      if (props.socketConnected) {
+        props.socket.emit("robot/bat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update robot battery! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updatePCCTPStatus() {
+    let cb = (success, pcctpInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            pcctpstatus: pcctpInfo["text"],
+          };
+        });
+      } else {
+        console.log('Updating PCCTP status failed: ${pcctpInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("policy/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update PCCTP status! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateGPSStatus() {
+    let cb = (success, gpsInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            gpsstatus: gpsInfo["status"],
+          };
+        });
+      } else {
+        console.log('Updating GPS status failed: ${gpsInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("novatel/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update GPS status! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
   /**
    * @brief fetch the initial robot location
    */

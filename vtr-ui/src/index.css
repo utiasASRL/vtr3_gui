@@ -4,7 +4,7 @@
 }
 
 .leaflet-container-boat{
-  width: 48vw;
+  width: 58vw;
   height: 90vh;
 }
 
@@ -24,6 +24,16 @@
   transition: opacity 0.5s linear;
 }
 
+.settings-category {
+  margin-block-start: 1em;
+  margin-block-end: 0.2em;
+}
+
+.settings-item {
+  margin-block-start: 0.2em;
+  margin-block-end: 0.2em;
+}
+
 body {
   background: #fafafa;
   font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -33,4 +43,20 @@ body {
   margin: 0;
   padding: 0;
   position: absolute;
+}
+
+/* BOAT VISUALIZATION */
+.color-picker {
+  border: 1px black solid;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+}
+
+#water-mask-color {
+  background-color: blue;
+}
+
+#global-path-color {
+  background-color: magenta;
 }
