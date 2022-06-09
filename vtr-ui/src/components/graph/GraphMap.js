@@ -192,7 +192,7 @@ class GraphMap extends React.Component {
       showMenu: false,
       menuPos: [0, 0],
       selectedMarkerID: 0,
-      robotloc: [0, 0],  // USED TO BE NULL, SET DEFAULT VALUE TO AVOID ERROR
+      robotloc: [0, 0],
       robotangle: 0,
       robotvelx: 0,
       robotvely: 0,
@@ -660,6 +660,7 @@ class GraphMap extends React.Component {
               flexDirection="column"
               alignItems="flex-start"
             >
+
               <h3 height="10%">Boat Tracking and Policy Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
@@ -2247,7 +2248,6 @@ class GraphMap extends React.Component {
       }
     });
   }
-
   /**
    * @brief fetch the initial robot location
    */
