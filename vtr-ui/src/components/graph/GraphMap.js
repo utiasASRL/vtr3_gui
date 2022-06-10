@@ -19,7 +19,7 @@ import { kdTree } from "kd-tree-javascript";
 import Box from "@material-ui/core/Box";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import { HighlightOff } from "@material-ui/icons";
+import { HighlightOff, ZoomOut } from "@material-ui/icons";
 
 import Button from "@material-ui/core/Button";
 
@@ -204,6 +204,11 @@ class GraphMap extends React.Component {
       gpsstatus: 0,
       pastpath: [],
       futurepath: [],
+      // Map source
+      mapmaxnativezoom: 20,
+      mapmaxzoom: 22,
+      mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI"
     };
 
     // Get the underlying leaflet map.
@@ -370,7 +375,7 @@ class GraphMap extends React.Component {
     }
   }
 
-  // TOGGLE SETTINGS ===============================================================
+  // Checkbox settings ===============================================================
   toggleWaterMask(e) {
     console.log("toggle water mask");
     console.log(e.target.checked);
@@ -382,6 +387,30 @@ class GraphMap extends React.Component {
     console.log(e.target.checked);
     console.log(this.state.robotloc[0])
     console.log(this.state.robotloc[1])
+  }
+
+  toggleOfflineMap(e) {
+    if (e.target.checked) {
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
+      this.setState(() => {
+        return {
+          mapmaxnativezoom: 15,
+          mapmaxzoom: 15,
+          mapurl: "4uMaps/{z}/{x}/{y}.png",
+          mapattribution: "© OpenStreetMap contributors, CC-BY-SA"
+        };
+      });
+    } else {
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
+      this.setState(() => {
+        return {
+          mapmaxnativezoom: 20,
+          mapmaxzoom: 22,
+          mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+        };
+      });
+    }
   }
 
   render() {
@@ -681,12 +710,12 @@ class GraphMap extends React.Component {
                   <LayersControl.BaseLayer name="Map" checked>
                     {/* leaflet map tiles */}
                     <TileLayer
-                      maxNativeZoom={15}
-                      maxZoom={15}
+                      maxNativeZoom={this.state.mapmaxnativezoom}
+                      maxZoom={this.state.mapmaxzoom}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"4uMaps/{z}/{x}/{y}.png"}
-                      attribution="© OpenStreetMap contributors, CC-BY-SA"
+                      url={this.state.mapurl}
+                      attribution={this.state.mapattribution}
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -862,6 +891,16 @@ class GraphMap extends React.Component {
                 <div class="color-picker" id="global-path-color" />
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
               </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">Toggle Offline Map</h3>
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} />
+              </Box>
 
               <h2 class="settings-category">Status</h2>
               <Box
@@ -881,8 +920,18 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">GPS</h3>
+                <h3 class="settings-item">GPS RTK</h3>
                 <p class="settings-item">{this.state.gpsstatus}</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="70%"
+                alignItems="center"
+              >
+                <h3 class="settings-item">GPS Satellites</h3>
+                <p class="settings-item">pass</p>
               </Box>
 
               <h2 class="settings-category">Actions</h2>
@@ -2170,12 +2219,13 @@ class GraphMap extends React.Component {
       if (success) {
         // Set text color based on voltage level
         var batcol = "black";
-        if (robotBat[0] <= 13)
+        if (robotBat["voltage"] <= 13) {
           batcol = "red";
-        else if (robotBat[0] <= 15)
+        } else if (robotBat["voltage"] <= 15) {
           batcol = "darkorange";
-        else
+        } else {
           batcol = "green";
+        }
 
         this.setState(() => {
           return {
