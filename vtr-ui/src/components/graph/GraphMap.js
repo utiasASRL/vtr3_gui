@@ -199,12 +199,13 @@ class GraphMap extends React.Component {
       robotvelz: 0,
       robotvelocity: 0,
       robotbattery: 0,
-      batteryColor: "black",
+      batterycolor: "black",
       pcctpstatus: "",
-      gpsstatus: 0,
+      rtkstatus: -1,
+      rtkcolor: "black",
       pastpath: [],
       futurepath: [],
-      // Map source
+      // Leaflet map
       mapmaxnativezoom: 20,
       mapmaxzoom: 22,
       mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
@@ -865,7 +866,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">Battery</h3>
-                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(1)} V</p>
+                <p class="settings-item" style={{ color: this.state.batterycolor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
               <h2 class="settings-category">Visualization</h2>
@@ -921,7 +922,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <h3 class="settings-item">GPS RTK</h3>
-                <p class="settings-item">{this.state.gpsstatus}</p>
+                <p class="settings-item" style={{ color: this.state.rtkcolor }}>{this.state.rtkstatus}</p>
               </Box>
               <Box
                 display={"flex"}
@@ -2229,7 +2230,7 @@ class GraphMap extends React.Component {
 
         this.setState(() => {
           return {
-            batteryColor: batcol,
+            batterycolor: batcol,
             robotbattery: robotBat["voltage"],
           };
         });
@@ -2278,9 +2279,24 @@ class GraphMap extends React.Component {
   _updateGPSStatus() {
     let cb = (success, gpsInfo) => {
       if (success) {
+        // Set RTK status text and color based on status number
+        var statusText = "";
+        var statusCol = "black";
+        if (gpsInfo["status"] == 0) {
+          statusText = "No GPS! (0)"
+          statusCol = "red";
+        } else if (gpsInfo["status"] == 1) {
+          statusText = "Disconnected (1)";
+          statusCol = "darkorange";
+        } else {
+          statusText = "Connected (2)";
+          statusCol = "green";
+        }
+
         this.setState(() => {
           return {
-            gpsstatus: gpsInfo["status"],
+            rtkstatus: statusText,
+            rtkcolor: statusCol
           };
         });
       } else {
