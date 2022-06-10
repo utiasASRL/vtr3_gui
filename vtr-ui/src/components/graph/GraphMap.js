@@ -685,7 +685,7 @@ class GraphMap extends React.Component {
             justifyContent="space-around"
           >
             <Box
-              width="58%"
+              width="48%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
@@ -810,7 +810,7 @@ class GraphMap extends React.Component {
               </LeafletMap>
             </Box>
             <Box
-              width="38%"
+              width="48%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
@@ -822,7 +822,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Velocity</p>
@@ -832,7 +832,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Latitude</p>
@@ -842,7 +842,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Longitude</p>
@@ -852,7 +852,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Angle</p>
@@ -862,7 +862,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Battery</p>
@@ -874,7 +874,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Water Mask</p>
@@ -885,7 +885,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Global Path</p>
@@ -896,7 +896,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">Offline Map</p>
@@ -908,7 +908,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">PCCTP</p>
@@ -918,7 +918,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">GPS RTK</p>
@@ -928,7 +928,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 <p class="settings-item">GPS Satellites</p>
@@ -940,7 +940,7 @@ class GraphMap extends React.Component {
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
                 {mode === "boat" && (
