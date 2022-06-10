@@ -199,10 +199,10 @@ class GraphMap extends React.Component {
       robotvelz: 0,
       robotvelocity: 0,
       robotbattery: 0,
-      batterycolor: "black",
+      batterycolor: "red",
       pcctpstatus: "",
-      rtkstatus: -1,
-      rtkcolor: "black",
+      rtkstatus: "No GPS! (0)",
+      rtkcolor: "red",
       pastpath: [],
       futurepath: [],
       // Leaflet map
@@ -691,7 +691,7 @@ class GraphMap extends React.Component {
               alignItems="flex-start"
             >
 
-              <h3 height="10%">Boat Tracking and Policy Visualization</h3>
+              <h3 height="10%">Map Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -817,7 +817,7 @@ class GraphMap extends React.Component {
             >
               <h3 height="10%">Settings and Properties</h3>
 
-              <h2 class="settings-category">Boat Information</h2>
+              <h3 class="settings-category">Boat Information</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
@@ -825,7 +825,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Velocity</h3>
+                <p class="settings-item">Velocity</p>
                 <p class="settings-item">{this.state.robotvelocity.toFixed(2)} m/s</p>
               </Box>
               <Box
@@ -835,7 +835,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Latitude</h3>
+                <p class="settings-item">Latitude</p>
                 <p class="settings-item">{this.state.robotloc[0].toFixed(6)}°</p>
               </Box>
               <Box
@@ -845,7 +845,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Longitude</h3>
+                <p class="settings-item">Longitude</p>
                 <p class="settings-item">{this.state.robotloc[1].toFixed(6)}°</p>
               </Box>
               <Box
@@ -855,7 +855,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Angle</h3>
+                <p class="settings-item">Angle</p>
                 <p class="settings-item">{-this.state.robotangle.toFixed(1)}°</p>
               </Box>
               <Box
@@ -865,11 +865,11 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Battery</h3>
+                <p class="settings-item">Battery</p>
                 <p class="settings-item" style={{ color: this.state.batterycolor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
-              <h2 class="settings-category">Visualization</h2>
+              <h3 class="settings-category">Visualization</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
@@ -877,8 +877,8 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Show Water Mask</h3>
-                <div class="color-picker" id="water-mask-color" />
+                <p class="settings-item">Water Mask</p>
+                {/* <div class="color-picker" id="water-mask-color" /> */}
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
               </Box>
               <Box
@@ -888,8 +888,8 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Show Global Path</h3>
-                <div class="color-picker" id="global-path-color" />
+                <p class="settings-item">Global Path</p>
+                {/* <div class="color-picker" id="global-path-color" /> */}
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
               </Box>
               <Box
@@ -899,11 +899,11 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Toggle Offline Map</h3>
+                <p class="settings-item">Offline Map</p>
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} />
               </Box>
 
-              <h2 class="settings-category">Status</h2>
+              <h3 class="settings-category">Status</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
@@ -911,7 +911,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">PCCTP</h3>
+                <p class="settings-item">PCCTP</p>
                 <p class="settings-item">{this.state.pcctpstatus}</p>
               </Box>
               <Box
@@ -921,7 +921,7 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">GPS RTK</h3>
+                <p class="settings-item">GPS RTK</p>
                 <p class="settings-item" style={{ color: this.state.rtkcolor }}>{this.state.rtkstatus}</p>
               </Box>
               <Box
@@ -931,11 +931,11 @@ class GraphMap extends React.Component {
                 width="70%"
                 alignItems="center"
               >
-                <h3 class="settings-item">GPS Satellites</h3>
+                <p class="settings-item">GPS Satellites</p>
                 <p class="settings-item">pass</p>
               </Box>
 
-              <h2 class="settings-category">Actions</h2>
+              <h3 class="settings-category">Actions</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
