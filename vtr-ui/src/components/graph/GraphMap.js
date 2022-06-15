@@ -205,11 +205,15 @@ class GraphMap extends React.Component {
       rtkcolor: "red",
       pastpath: [],
       futurepath: [],
-      // Leaflet map
+      // Map
       mapmaxnativezoom: 20,
       mapmaxzoom: 22,
       mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-      mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+      mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
+      pastpathcolor: "#0072f5",
+      // Checkboxes
+      disablewatermask: 0,
+      disableofflinemap: 0
     };
 
     // Get the underlying leaflet map.
@@ -378,9 +382,19 @@ class GraphMap extends React.Component {
 
   // Checkbox settings ===============================================================
   toggleWaterMask(e) {
-    console.log("toggle water mask");
-    console.log(e.target.checked);
-    console.log(this.state.robotloc)
+    if (e.target.checked) {
+      this.setState(() => {
+        return {
+          disableofflinemap: true
+        };
+      });
+    } else {
+      this.setState(() => {
+        return {
+          disableofflinemap: false
+        };
+      });
+    }
   }
 
   toggleGlobalPath(e) {
@@ -398,7 +412,8 @@ class GraphMap extends React.Component {
           mapmaxnativezoom: 15,
           mapmaxzoom: 15,
           mapurl: "4uMaps/{z}/{x}/{y}.png",
-          mapattribution: "© OpenStreetMap contributors, CC-BY-SA"
+          mapattribution: "© OpenStreetMap contributors, CC-BY-SA",
+          disablewatermask: true
         };
       });
     } else {
@@ -408,7 +423,8 @@ class GraphMap extends React.Component {
           mapmaxnativezoom: 20,
           mapmaxzoom: 22,
           mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI"
+          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
+          disablewatermask: false
         };
       });
     }
@@ -795,7 +811,7 @@ class GraphMap extends React.Component {
 
                 {/*robot past path*/}
                 <Polyline
-                  color={"#0072f5"}
+                  color={this.state.pastpathcolor}
                   opacity={poseGraphOpacity}
                   positions={this.state.pastpath}
                   weight={5}
@@ -877,17 +893,6 @@ class GraphMap extends React.Component {
                 width="100%"
                 alignItems="center"
               >
-                <p class="settings-item">Water Mask</p>
-                {/* <div class="color-picker" id="water-mask-color" /> */}
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
-              </Box>
-              <Box
-                display={"flex"}
-                flexDirection={"row"}
-                justifyContent="space-between"
-                width="100%"
-                alignItems="center"
-              >
                 <p class="settings-item">Global Path</p>
                 {/* <div class="color-picker" id="global-path-color" /> */}
                 <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
@@ -899,8 +904,19 @@ class GraphMap extends React.Component {
                 width="100%"
                 alignItems="center"
               >
+                <p class="settings-item">Water Mask</p>
+                {/* <div class="color-picker" id="water-mask-color" /> */}
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} disabled={this.state.disablewatermask} />
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
                 <p class="settings-item">Offline Map</p>
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} disabled={this.state.disableofflinemap} />
               </Box>
 
               <h3 class="settings-category">Status</h3>
