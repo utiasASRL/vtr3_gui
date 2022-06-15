@@ -399,13 +399,6 @@ class GraphMap extends React.Component {
     }
   }
 
-  toggleGlobalPath(e) {
-    console.log("toggle global path");
-    console.log(e.target.checked);
-    console.log(this.state.pastpath);
-    console.log(this.state.globalpath);
-  }
-
   toggleOfflineMap(e) {
     if (e.target.checked) {
       this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
@@ -709,7 +702,7 @@ class GraphMap extends React.Component {
               alignItems="flex-start"
             >
 
-              <h3 height="10%">Map Visualization</h3>
+              <h3 height="10%">Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -822,15 +815,8 @@ class GraphMap extends React.Component {
                 <Polyline
                   color={"#f50057"}
                   opacity={poseGraphOpacity}
-                  positions={this.state.futurepath}
-                  weight={5}
-                />
-                {/*robot global path*/}
-                <Polyline
-                  color={"#00f525"}
-                  opacity={poseGraphOpacity}
                   positions={this.state.globalpath}
-                  weight={2}
+                  weight={5}
                 />
               </LeafletMap>
             </Box>
@@ -894,18 +880,7 @@ class GraphMap extends React.Component {
                 <p class="settings-item" style={{ color: this.state.batterycolor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
-              <h3 class="settings-category">Visualization</h3>
-              <Box
-                display={"flex"}
-                flexDirection={"row"}
-                justifyContent="space-between"
-                width="100%"
-                alignItems="center"
-              >
-                <p class="settings-item">Global Path</p>
-                {/* <div class="color-picker" id="global-path-color" /> */}
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
-              </Box>
+              <h3 class="settings-category">Map Type</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
