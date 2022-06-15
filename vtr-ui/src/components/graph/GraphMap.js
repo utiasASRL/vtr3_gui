@@ -201,10 +201,12 @@ class GraphMap extends React.Component {
       robotbattery: 0,
       batterycolor: "red",
       pcctpstatus: "",
-      rtkstatus: "No GPS! (0)",
+      rtkstatus: "Fix not available (0)",
       rtkcolor: "red",
+      numsat: 0,
       pastpath: [],
       futurepath: [],
+      globalpath: [],
       // Map
       mapmaxnativezoom: 20,
       mapmaxzoom: 22,
@@ -400,8 +402,8 @@ class GraphMap extends React.Component {
   toggleGlobalPath(e) {
     console.log("toggle global path");
     console.log(e.target.checked);
-    console.log(this.state.robotloc[0])
-    console.log(this.state.robotloc[1])
+    console.log(this.state.pastpath);
+    console.log(this.state.globalpath);
   }
 
   toggleOfflineMap(e) {
@@ -823,6 +825,13 @@ class GraphMap extends React.Component {
                   positions={this.state.futurepath}
                   weight={5}
                 />
+                {/*robot global path*/}
+                <Polyline
+                  color={"#00f525"}
+                  opacity={poseGraphOpacity}
+                  positions={this.state.globalpath}
+                  weight={2}
+                />
               </LeafletMap>
             </Box>
             <Box
@@ -948,7 +957,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <p class="settings-item">GPS Satellites</p>
-                <p class="settings-item">pass</p>
+                <p class="settings-item">{this.state.numsat}</p>
               </Box>
 
               <h3 class="settings-category">Actions</h3>
@@ -2185,6 +2194,7 @@ class GraphMap extends React.Component {
     this._updateRobotBattery();
     this._updatePCCTPStatus();
     this._updateGPSStatus();
+    this._getGlobalPath();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2295,41 +2305,76 @@ class GraphMap extends React.Component {
   _updateGPSStatus() {
     let cb = (success, gpsInfo) => {
       if (success) {
-        // Set RTK status text and color based on status number
+        // Set RTK text and color based on number
         var statusText = "";
         var statusCol = "black";
-        if (gpsInfo["status"] == 0) {
-          statusText = "No GPS! (0)"
+        if (gpsInfo["fix"] == 0) {
+          statusText = "Fix not available (0)"
           statusCol = "red";
-        } else if (gpsInfo["status"] == 1) {
-          statusText = "Disconnected (1)";
+        } else if (gpsInfo["fix"] == 1) {
+          statusText = "Single point (1)";
+          statusCol = "red";
+        } else if (gpsInfo["fix"] == 2) {
+          statusText = "Pseudorange differential (2)";
+          statusCol = "darkorange";
+        } else if (gpsInfo["fix"] == 4) {
+          statusText = "RTK fixed ambiguity (4)";
+          statusCol = "green";
+        } else if (gpsInfo["fix"] == 5) {
+          statusText = "RTK floating ambiguity (5)";
           statusCol = "darkorange";
         } else {
-          statusText = "Connected (2)";
-          statusCol = "green";
+          statusText = "(" + gpsInfo["fix"] + ")";
+          statusCol = "black";
         }
 
         this.setState(() => {
           return {
             rtkstatus: statusText,
-            rtkcolor: statusCol
+            rtkcolor: statusCol,
+            numsat: gpsInfo["numsat"]
           };
         });
       } else {
-        console.log('Updating GPS status failed: ${gpsInfo}');
+        console.log('Updating GPS nmea failed: ${gpsInfo}');
       }
     };
 
     this.setState((state, props) => {
       if (props.socketConnected) {
-        props.socket.emit("novatel/stat", cb.bind(this));
+        props.socket.emit("gps/nmea", cb.bind(this));
       } else {
         console.log(
-          'Cannot update GPS status! Socket not connected.\nTry again later!'
+          'Cannot update GPS nmea! Socket not connected.\nTry again later!'
         );
       }
     });
   }
+
+  _getGlobalPath() {
+    let cb = (success, planInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            globalpath: planInfo["poses"]
+          };
+        });
+      } else {
+        console.log('Getting global plan failed: ${planInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("policy/globalplan", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot get global plan! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
   /**
    * @brief fetch the initial robot location
    */
