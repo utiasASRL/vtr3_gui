@@ -212,7 +212,6 @@ class GraphMap extends React.Component {
       mapmaxzoom: 22,
       mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
       mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
-      pastpathcolor: "#0072f5",
       // Checkboxes
       disablewatermask: 0,
       disableofflinemap: 0
@@ -702,7 +701,7 @@ class GraphMap extends React.Component {
               alignItems="flex-start"
             >
 
-              <h3 height="10%">Visualization</h3>
+              <h3 height="10%">Tracking and Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -804,18 +803,18 @@ class GraphMap extends React.Component {
                   />
                 )}
 
-                {/*robot past path*/}
-                <Polyline
-                  color={this.state.pastpathcolor}
-                  opacity={poseGraphOpacity}
-                  positions={this.state.pastpath}
-                  weight={5}
-                />
                 {/*robot future path*/}
                 <Polyline
-                  color={"#f50057"}
+                  color={"#00ff2a"}
                   opacity={poseGraphOpacity}
                   positions={this.state.globalpath}
+                  weight={5}
+                />
+                {/*robot past path*/}
+                <Polyline
+                  color={"#ff6a00"}
+                  opacity={poseGraphOpacity}
+                  positions={this.state.pastpath}
                   weight={5}
                 />
               </LeafletMap>
@@ -911,7 +910,7 @@ class GraphMap extends React.Component {
                 width="100%"
                 alignItems="center"
               >
-                <p class="settings-item">PCCTP</p>
+                <p class="settings-item">Policy Executor</p>
                 <p class="settings-item">{this.state.pcctpstatus}</p>
               </Box>
               <Box
@@ -921,7 +920,7 @@ class GraphMap extends React.Component {
                 width="100%"
                 alignItems="center"
               >
-                <p class="settings-item">GPS RTK</p>
+                <p class="settings-item">GPS Quality</p>
                 <p class="settings-item" style={{ color: this.state.rtkcolor }}>{this.state.rtkstatus}</p>
               </Box>
               <Box
@@ -931,7 +930,7 @@ class GraphMap extends React.Component {
                 width="100%"
                 alignItems="center"
               >
-                <p class="settings-item">GPS Satellites</p>
+                <p class="settings-item">Number of Satellites</p>
                 <p class="settings-item">{this.state.numsat}</p>
               </Box>
 
