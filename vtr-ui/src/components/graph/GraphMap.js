@@ -204,6 +204,7 @@ class GraphMap extends React.Component {
       rtkstatus: "Fix not available (0)",
       rtkcolor: "red",
       numsat: 0,
+      totalcpu: 0,
       pastpath: [],
       futurepath: [],
       globalpath: [],
@@ -932,6 +933,16 @@ class GraphMap extends React.Component {
               >
                 <p class="settings-item">Number of Satellites</p>
                 <p class="settings-item">{this.state.numsat}</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
+                <p class="settings-item">Total CPU Usage</p>
+                <p class="settings-item">{this.state.totalcpu.toFixed(1)}%</p>
               </Box>
 
               <h3 class="settings-category">Actions</h3>
@@ -2168,7 +2179,8 @@ class GraphMap extends React.Component {
     this._updateRobotBattery();
     this._updatePCCTPStatus();
     this._updateGPSStatus();
-    this._getGlobalPath();
+    this._updateGlobalPath();
+    this._updateTotalCPU();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2325,7 +2337,7 @@ class GraphMap extends React.Component {
     });
   }
 
-  _getGlobalPath() {
+  _updateGlobalPath() {
     let cb = (success, planInfo) => {
       if (success) {
         this.setState(() => {
@@ -2334,7 +2346,7 @@ class GraphMap extends React.Component {
           };
         });
       } else {
-        console.log('Getting global plan failed: ${planInfo}');
+        console.log('Updating global plan failed: ${planInfo}');
       }
     };
 
@@ -2343,7 +2355,31 @@ class GraphMap extends React.Component {
         props.socket.emit("policy/globalplan", cb.bind(this));
       } else {
         console.log(
-          'Cannot get global plan! Socket not connected.\nTry again later!'
+          'Cannot update global plan! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateTotalCPU() {
+    let cb = (success, cpuInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            totalcpu: cpuInfo["total"]
+          };
+        });
+      } else {
+        console.log('Updating total CPU% failed: ${cpuInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("cpu/total", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update total CPU%! Socket not connected.\nTry again later!'
         );
       }
     });
