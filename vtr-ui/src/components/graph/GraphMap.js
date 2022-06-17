@@ -200,7 +200,7 @@ class GraphMap extends React.Component {
       robotvelocity: 0,
       robotbattery: 0,
       batterycolor: "red",
-      pcctpstatus: "",
+      pcctpstatus: "n/a",
       rtkstatus: "Fix not available (0)",
       rtkcolor: "red",
       numsat: 0,
