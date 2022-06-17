@@ -19,7 +19,7 @@ import { kdTree } from "kd-tree-javascript";
 import Box from "@material-ui/core/Box";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import { HighlightOff } from "@material-ui/icons";
+import { HighlightOff, ZoomOut } from "@material-ui/icons";
 
 import Button from "@material-ui/core/Button";
 
@@ -199,11 +199,23 @@ class GraphMap extends React.Component {
       robotvelz: 0,
       robotvelocity: 0,
       robotbattery: 0,
-      batteryColor: "black",
-      pcctpstatus: "",
-      gpsstatus: 0,
+      batterycolor: "red",
+      pcctpstatus: "n/a",
+      rtkstatus: "Fix not available (0)",
+      rtkcolor: "red",
+      numsat: 0,
+      totalcpu: 0,
       pastpath: [],
       futurepath: [],
+      globalpath: [],
+      // Map
+      mapmaxnativezoom: 20,
+      mapmaxzoom: 22,
+      mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
+      // Checkboxes
+      disablewatermask: 0,
+      disableofflinemap: 0
     };
 
     // Get the underlying leaflet map.
@@ -370,18 +382,47 @@ class GraphMap extends React.Component {
     }
   }
 
-  // TOGGLE SETTINGS ===============================================================
+  // Checkbox settings ===============================================================
   toggleWaterMask(e) {
-    console.log("toggle water mask");
-    console.log(e.target.checked);
-    console.log(this.state.robotloc)
+    if (e.target.checked) {
+      this.setState(() => {
+        return {
+          disableofflinemap: true
+        };
+      });
+    } else {
+      this.setState(() => {
+        return {
+          disableofflinemap: false
+        };
+      });
+    }
   }
 
-  toggleGlobalPath(e) {
-    console.log("toggle global path");
-    console.log(e.target.checked);
-    console.log(this.state.robotloc[0])
-    console.log(this.state.robotloc[1])
+  toggleOfflineMap(e) {
+    if (e.target.checked) {
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
+      this.setState(() => {
+        return {
+          mapmaxnativezoom: 15,
+          mapmaxzoom: 15,
+          mapurl: "4uMaps/{z}/{x}/{y}.png",
+          mapattribution: "© OpenStreetMap contributors, CC-BY-SA",
+          disablewatermask: true
+        };
+      });
+    } else {
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
+      this.setState(() => {
+        return {
+          mapmaxnativezoom: 20,
+          mapmaxzoom: 22,
+          mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
+          disablewatermask: false
+        };
+      });
+    }
   }
 
   render() {
@@ -655,13 +696,13 @@ class GraphMap extends React.Component {
             justifyContent="space-around"
           >
             <Box
-              width="58%"
+              width="48%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
             >
 
-              <h3 height="10%">Boat Tracking and Policy Visualization</h3>
+              <h3 height="10%">Tracking and Visualization</h3>
               <LeafletMap
                 className="leaflet-container-boat"
                 ref={this.setMapEs}
@@ -681,12 +722,12 @@ class GraphMap extends React.Component {
                   <LayersControl.BaseLayer name="Map" checked>
                     {/* leaflet map tiles */}
                     <TileLayer
-                      maxNativeZoom={15}
-                      maxZoom={15}
+                      maxNativeZoom={this.state.mapmaxnativezoom}
+                      maxZoom={this.state.mapmaxzoom}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"4uMaps/{z}/{x}/{y}.png"}
-                      attribution="© OpenStreetMap contributors, CC-BY-SA"
+                      url={this.state.mapurl}
+                      attribution={this.state.mapattribution}
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
@@ -763,134 +804,153 @@ class GraphMap extends React.Component {
                   />
                 )}
 
-                {/*robot past path*/}
-                <Polyline
-                  color={"#0072f5"}
-                  opacity={poseGraphOpacity}
-                  positions={this.state.pastpath}
-                  weight={5}
-                />
                 {/*robot future path*/}
                 <Polyline
-                  color={"#f50057"}
+                  color={"#00ff2a"}
                   opacity={poseGraphOpacity}
-                  positions={this.state.futurepath}
+                  positions={this.state.globalpath}
+                  weight={5}
+                />
+                {/*robot past path*/}
+                <Polyline
+                  color={"#ff6a00"}
+                  opacity={poseGraphOpacity}
+                  positions={this.state.pastpath}
                   weight={5}
                 />
               </LeafletMap>
             </Box>
             <Box
-              width="38%"
+              width="48%"
               display="flex"
               flexDirection="column"
               alignItems="flex-start"
             >
               <h3 height="10%">Settings and Properties</h3>
 
-              <h2 class="settings-category">Boat Information</h2>
+              <h3 class="settings-category">Boat Information</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Velocity</h3>
+                <p class="settings-item">Velocity</p>
                 <p class="settings-item">{this.state.robotvelocity.toFixed(2)} m/s</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Latitude</h3>
+                <p class="settings-item">Latitude</p>
                 <p class="settings-item">{this.state.robotloc[0].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Longitude</h3>
+                <p class="settings-item">Longitude</p>
                 <p class="settings-item">{this.state.robotloc[1].toFixed(6)}°</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Angle</h3>
+                <p class="settings-item">Angle</p>
                 <p class="settings-item">{-this.state.robotangle.toFixed(1)}°</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Battery</h3>
-                <p class="settings-item" style={{ color: this.state.batteryColor }}>{this.state.robotbattery.toFixed(1)} V</p>
+                <p class="settings-item">Battery</p>
+                <p class="settings-item" style={{ color: this.state.batterycolor }}>{this.state.robotbattery.toFixed(1)} V</p>
               </Box>
 
-              <h2 class="settings-category">Visualization</h2>
+              <h3 class="settings-category">Map Type</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Show Water Mask</h3>
-                <div class="color-picker" id="water-mask-color" />
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
+                <p class="settings-item">Water Mask</p>
+                {/* <div class="color-picker" id="water-mask-color" /> */}
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} disabled={this.state.disablewatermask} />
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">Show Global Path</h3>
-                <div class="color-picker" id="global-path-color" />
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleGlobalPath(e)} />
+                <p class="settings-item">Offline Map</p>
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} disabled={this.state.disableofflinemap} />
               </Box>
 
-              <h2 class="settings-category">Status</h2>
+              <h3 class="settings-category">Status</h3>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">PCCTP</h3>
+                <p class="settings-item">Policy Executor</p>
                 <p class="settings-item">{this.state.pcctpstatus}</p>
               </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
                 alignItems="center"
               >
-                <h3 class="settings-item">GPS</h3>
-                <p class="settings-item">{this.state.gpsstatus}</p>
+                <p class="settings-item">GPS Quality</p>
+                <p class="settings-item" style={{ color: this.state.rtkcolor }}>{this.state.rtkstatus}</p>
               </Box>
-
-              <h2 class="settings-category">Actions</h2>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
                 justifyContent="space-between"
-                width="70%"
+                width="100%"
+                alignItems="center"
+              >
+                <p class="settings-item">Number of Satellites</p>
+                <p class="settings-item">{this.state.numsat}</p>
+              </Box>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
+                <p class="settings-item">Total CPU Usage</p>
+                <p class="settings-item">{this.state.totalcpu.toFixed(1)}%</p>
+              </Box>
+
+              <h3 class="settings-category">Actions</h3>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="100%"
                 alignItems="center"
               >
                 {mode === "boat" && (
@@ -2119,6 +2179,8 @@ class GraphMap extends React.Component {
     this._updateRobotBattery();
     this._updatePCCTPStatus();
     this._updateGPSStatus();
+    this._updateGlobalPath();
+    this._updateTotalCPU();
 
     //save this new location to the past path
     this.setState((prevstate) => {
@@ -2170,16 +2232,17 @@ class GraphMap extends React.Component {
       if (success) {
         // Set text color based on voltage level
         var batcol = "black";
-        if (robotBat[0] <= 13)
+        if (robotBat["voltage"] <= 13) {
           batcol = "red";
-        else if (robotBat[0] <= 15)
+        } else if (robotBat["voltage"] <= 15) {
           batcol = "darkorange";
-        else
+        } else {
           batcol = "green";
+        }
 
         this.setState(() => {
           return {
-            batteryColor: batcol,
+            batterycolor: batcol,
             robotbattery: robotBat["voltage"],
           };
         });
@@ -2228,26 +2291,100 @@ class GraphMap extends React.Component {
   _updateGPSStatus() {
     let cb = (success, gpsInfo) => {
       if (success) {
+        // Set RTK text and color based on number
+        var statusText = "";
+        var statusCol = "black";
+        if (gpsInfo["fix"] == 0) {
+          statusText = "Fix not available (0)"
+          statusCol = "red";
+        } else if (gpsInfo["fix"] == 1) {
+          statusText = "Single point (1)";
+          statusCol = "red";
+        } else if (gpsInfo["fix"] == 2) {
+          statusText = "Pseudorange differential (2)";
+          statusCol = "darkorange";
+        } else if (gpsInfo["fix"] == 4) {
+          statusText = "RTK fixed ambiguity (4)";
+          statusCol = "green";
+        } else if (gpsInfo["fix"] == 5) {
+          statusText = "RTK floating ambiguity (5)";
+          statusCol = "darkorange";
+        } else {
+          statusText = "(" + gpsInfo["fix"] + ")";
+          statusCol = "black";
+        }
+
         this.setState(() => {
           return {
-            gpsstatus: gpsInfo["status"],
+            rtkstatus: statusText,
+            rtkcolor: statusCol,
+            numsat: gpsInfo["numsat"]
           };
         });
       } else {
-        console.log('Updating GPS status failed: ${gpsInfo}');
+        console.log('Updating GPS nmea failed: ${gpsInfo}');
       }
     };
 
     this.setState((state, props) => {
       if (props.socketConnected) {
-        props.socket.emit("novatel/stat", cb.bind(this));
+        props.socket.emit("gps/nmea", cb.bind(this));
       } else {
         console.log(
-          'Cannot update GPS status! Socket not connected.\nTry again later!'
+          'Cannot update GPS nmea! Socket not connected.\nTry again later!'
         );
       }
     });
   }
+
+  _updateGlobalPath() {
+    let cb = (success, planInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            globalpath: planInfo["poses"]
+          };
+        });
+      } else {
+        console.log('Updating global plan failed: ${planInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("policy/globalplan", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update global plan! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateTotalCPU() {
+    let cb = (success, cpuInfo) => {
+      if (success) {
+        this.setState(() => {
+          return {
+            totalcpu: cpuInfo["total"]
+          };
+        });
+      } else {
+        console.log('Updating total CPU% failed: ${cpuInfo}');
+      }
+    };
+
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("cpu/total", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update total CPU%! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
   /**
    * @brief fetch the initial robot location
    */

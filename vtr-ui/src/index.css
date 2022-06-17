@@ -4,7 +4,7 @@
 }
 
 .leaflet-container-boat{
-  width: 58vw;
+  width: 48vw;
   height: 90vh;
 }
 
@@ -45,7 +45,7 @@ body {
   position: absolute;
 }
 
-/* BOAT VISUALIZATION */
+/* Boat mode */
 .color-picker {
   border: 1px black solid;
   border-radius: 50%;
