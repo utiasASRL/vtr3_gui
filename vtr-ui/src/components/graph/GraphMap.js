@@ -385,11 +385,11 @@ class GraphMap extends React.Component {
   // Checkbox settings ===============================================================
   toggleWaterMask(e) {
     if (e.target.checked) {
-      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 17);
       this.setState(() => {
         return {
-          mapmaxnativezoom: 15,
-          mapmaxzoom: 15,
+          mapmaxnativezoom: 17,
+          mapmaxzoom: 17,
           mapurl: "WaterMasks/{z}/{x}/{y}.png",
           mapattribution: "©",
           disableofflinemap: true
