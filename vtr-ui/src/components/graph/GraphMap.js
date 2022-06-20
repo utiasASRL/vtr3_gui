@@ -385,14 +385,24 @@ class GraphMap extends React.Component {
   // Checkbox settings ===============================================================
   toggleWaterMask(e) {
     if (e.target.checked) {
+      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
       this.setState(() => {
         return {
+          mapmaxnativezoom: 15,
+          mapmaxzoom: 15,
+          mapurl: "WaterMasks/{z}/{x}/{y}.png",
+          mapattribution: "©",
           disableofflinemap: true
         };
       });
     } else {
+      // this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
       this.setState(() => {
         return {
+          mapmaxnativezoom: 20,
+          mapmaxzoom: 22,
+          mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
           disableofflinemap: false
         };
       });
@@ -412,7 +422,7 @@ class GraphMap extends React.Component {
         };
       });
     } else {
-      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
+      // this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
       this.setState(() => {
         return {
           mapmaxnativezoom: 20,
