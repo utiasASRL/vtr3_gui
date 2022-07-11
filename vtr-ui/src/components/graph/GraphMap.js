@@ -213,10 +213,7 @@ class GraphMap extends React.Component {
       mapmaxzoom: 22,
       mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
       mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
-      watermaskopacity: 0,
-      // Checkboxes
-      disablewatermask: 0,
-      disableofflinemap: 0
+      watermaskopacity: 0
     };
 
     // Get the underlying leaflet map.
@@ -386,28 +383,15 @@ class GraphMap extends React.Component {
   // Checkbox settings ===============================================================
   toggleWaterMask(e) {
     if (e.target.checked) {
-      // this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
       this.setState(() => {
         return {
-          mapmaxnativezoom: 20,
-          mapmaxzoom: 22,
-          // mapurl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          mapurl: "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/5c33604bd2b466ef1f0d38659420663c-c02ea1b235d0c5f0762fd95c8372782a/tiles/{z}/{x}/{y}",
-          mapattribution: "Map Data &copy; <a href=\"https://earthengine.google.com/\">Google Earth Engine</a>",
-          watermaskopacity: 1,
-          disableofflinemap: true
+          watermaskopacity: 1
         };
       });
     } else {
-      // this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
       this.setState(() => {
         return {
-          mapmaxnativezoom: 20,
-          mapmaxzoom: 22,
-          mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
-          watermaskopacity: 0,
-          disableofflinemap: false
+          watermaskopacity: 0
         };
       });
     }
@@ -415,25 +399,17 @@ class GraphMap extends React.Component {
 
   toggleOfflineMap(e) {
     if (e.target.checked) {
-      this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 15);
       this.setState(() => {
         return {
-          mapmaxnativezoom: 15,
-          mapmaxzoom: 15,
-          mapurl: "4uMaps/{z}/{x}/{y}.png",
-          mapattribution: "© OpenStreetMap contributors, CC-BY-SA",
-          disablewatermask: true
+          mapurl: "Sentinel2Maps/{z}/{x}/{y}.png",
+          mapattribution: "Map Data © Google Earth Engine"
         };
       });
     } else {
-      // this.mapEs.setView([this.mapEs.getCenter().lat, this.mapEs.getCenter().lng], 18);
       this.setState(() => {
         return {
-          mapmaxnativezoom: 20,
-          mapmaxzoom: 22,
           mapurl: "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI",
-          disablewatermask: false
+          mapattribution: "Imagery @2021 TerraMetrics, Map data @2021 INEGI"
         };
       });
     }
@@ -743,48 +719,14 @@ class GraphMap extends React.Component {
                       url={this.state.mapurl}
                       attribution={this.state.mapattribution}
                     />
-                    {/* Port credit water mask layers */}
                     <TileLayer
                       maxNativeZoom={this.state.mapmaxnativezoom}
                       maxZoom={this.state.mapmaxzoom}
                       noWrap
                       subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/12f0d973992373f8d7958db1d641e2ca-7f3fd96ba60d8ac89f270fab79213ea6/tiles/{z}/{x}/{y}"}
+                      url={"WaterMasks/{z}/{x}/{y}.png"}
                       opacity={this.state.watermaskopacity}
                     />
-                    {/* <TileLayer
-                      maxNativeZoom={this.state.mapmaxnativezoom}
-                      maxZoom={this.state.mapmaxzoom}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0d28c2cbf83ad204ddc4251f2b70ce7a-38d01ff3893a9c191ea7924d5ed936d8/tiles/{z}/{x}/{y}"}
-                      opacity={this.state.watermaskopacity}
-                    /> */}
-                    {/* 9 Mile Lake water mask layers */}
-                    <TileLayer
-                      maxNativeZoom={this.state.mapmaxnativezoom}
-                      maxZoom={this.state.mapmaxzoom}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3bc9d596aa62db9749e811abf04dae41-ab92bd84f88d08c796f99853e2d8c2f0/tiles/{z}/{x}/{y}"}
-                      opacity={this.state.watermaskopacity}
-                    />
-                    <TileLayer
-                      maxNativeZoom={this.state.mapmaxnativezoom}
-                      maxZoom={this.state.mapmaxzoom}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/1e582380c29c047e7809f51c31675695-75bd65add96caec75e495e599e253c8a/tiles/{z}/{x}/{y}"}
-                      opacity={this.state.watermaskopacity}
-                    />
-                    {/* <TileLayer
-                      maxNativeZoom={this.state.mapmaxnativezoom}
-                      maxZoom={this.state.mapmaxzoom}
-                      noWrap
-                      subdomains={["mt0", "mt1", "mt2", "mt3"]}
-                      url={"https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/bc96c8e89898ad9fadb09485c819c6a2-b494e3b760bc7f992dc39265dbf22e5a/tiles/{z}/{x}/{y}"}
-                      opacity={this.state.watermaskopacity}
-                    /> */}
                   </LayersControl.BaseLayer>
                   <LayersControl.Overlay name="Mean" checked>
                     <FeatureGroup color="purple">
@@ -946,7 +888,7 @@ class GraphMap extends React.Component {
               >
                 <p class="settings-item">Water Mask</p>
                 {/* <div class="color-picker" id="water-mask-color" /> */}
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} disabled={this.state.disablewatermask} />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)}/>
               </Box>
               <Box
                 display={"flex"}
@@ -956,7 +898,7 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <p class="settings-item">Offline Map</p>
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} disabled={this.state.disableofflinemap} />
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)}/>
               </Box>
 
               <h3 class="settings-category">Status</h3>
