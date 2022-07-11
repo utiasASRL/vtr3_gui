@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Output of image computation is too large (1 bands for 33079662 pixels = 252.4 MiB \u003e 80.0 MiB).\nIf this is a reduction, try specifying a larger 'tileScale' parameter.",
+    "status": "INVALID_ARGUMENT"
+  }
+}
