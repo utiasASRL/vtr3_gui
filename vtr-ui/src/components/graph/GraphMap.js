@@ -208,6 +208,8 @@ class GraphMap extends React.Component {
       pastpath: [],
       futurepath: [],
       globalpath: [],
+      jetsonstatus: "Disconnected",
+      jetsoncolor: "red",
       // Map
       mapmaxnativezoom: 20,
       mapmaxzoom: 22,
@@ -888,7 +890,7 @@ class GraphMap extends React.Component {
               >
                 <p class="settings-item">Water Mask</p>
                 {/* <div class="color-picker" id="water-mask-color" /> */}
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)}/>
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleWaterMask(e)} />
               </Box>
               <Box
                 display={"flex"}
@@ -898,10 +900,20 @@ class GraphMap extends React.Component {
                 alignItems="center"
               >
                 <p class="settings-item">Offline Map</p>
-                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)}/>
+                <input class="settings-item" type="checkbox" onChange={e => this.toggleOfflineMap(e)} />
               </Box>
 
               <h3 class="settings-category">Status</h3>
+              <Box
+                display={"flex"}
+                flexDirection={"row"}
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
+                <p class="settings-item">Jetson Status</p>
+                <p class="settings-item" style={{ color: this.state.jetsoncolor }}>{this.state.jetsonstatus}</p>
+              </Box>
               <Box
                 display={"flex"}
                 flexDirection={"row"}
@@ -2178,6 +2190,7 @@ class GraphMap extends React.Component {
     this._updatePCCTPStatus();
     this._updateGPSStatus();
     this._updateGlobalPath();
+    this._updateJetsonStatus();
     this._updateTotalCPU();
 
     //save this new location to the past path
@@ -2230,9 +2243,9 @@ class GraphMap extends React.Component {
       if (success) {
         // Set text color based on voltage level
         var batcol = "black";
-        if (robotBat["voltage"] <= 13) {
+        if (robotBat["voltage"] < 13) {
           batcol = "red";
-        } else if (robotBat["voltage"] <= 15) {
+        } else if (robotBat["voltage"] < 15) {
           batcol = "darkorange";
         } else {
           batcol = "green";
@@ -2330,6 +2343,35 @@ class GraphMap extends React.Component {
       } else {
         console.log(
           'Cannot update GPS nmea! Socket not connected.\nTry again later!'
+        );
+      }
+    });
+  }
+
+  _updateJetsonStatus() {
+    let cb = (success, jetsonInfo) => {
+      var statusText = "";
+      var statusCol = "black";
+      if (success) {
+        statusText = "Running";
+        statusCol = "green";
+      } else {
+        statusText = "Disconnected"
+        statusCol = "red";
+      }
+      this.setState(() => {
+        return {
+          jetsonstatus: statusText,
+          jetsoncolor: statusCol
+        };
+      });
+    };
+    this.setState((state, props) => {
+      if (props.socketConnected) {
+        props.socket.emit("jetson/stat", cb.bind(this));
+      } else {
+        console.log(
+          'Cannot update Jetson status! Socket not connected.\nTry again later!'
         );
       }
     });
